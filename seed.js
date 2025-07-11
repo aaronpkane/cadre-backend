@@ -6,7 +6,10 @@ const seed = async () => {
 
     // Clear old data (if needed)
     await db.query('TRUNCATE members RESTART IDENTITY CASCADE');
-
+    await db.query('TRUNCATE TABLE task_competency_links RESTART IDENTITY CASCADE');
+    await db.query('TRUNCATE tasks RESTART IDENTITY CASCADE');
+    await db.query('TRUNCATE competencies RESTART IDENTITY CASCADE');
+  
     // Seed members
     const members = [
       { rate_rank: 'BM1', first_name: 'Joseph', last_name: 'Coastie', employee_id: '0000001', email: 'joseph.coastie@uscg.mil' },
@@ -76,9 +79,10 @@ const seed = async () => {
       {code: 'PQCII', title: 'FT&E Phase II - Shooting Drills', description: 'Phase II'},
       {code: 'PQCIII', title: 'FT&E Phase III - Pistol Qualification Course', description: 'Phase III'},
       {code: 'PQCIV', title: 'FT&E Phase IV - Practical Scenario Evaluation', description: 'Phase IV'},
-      {code: 'IQ-BTM-LEQB', title: 'Unit BTM Qualification Board', description: 'BTM Board'},
       {code: 'IQ-BO-LEQB', title: 'Unit BO Qualification Board', description: 'BO Board'},
-      {code: 'STWATCH-LEQB', title: 'Unit ST Watch Qualificaiton Board', description: 'ST Watch Board'},
+      {code: 'IQ-BTM-LEQB', title: 'Unit BTM Qualification Board', description: 'BTM Board'},
+      {code: 'IQ-STWATCH-LEQB', title: 'Unit ST Watch Qualificaiton Board', description: 'ST Watch Board'},
+      {code: 'OPSBO', title: 'Graduate MLEA BO Course', description: 'MLEA Graduate'},
     ];
 
     for (let t of tasks) {
@@ -99,6 +103,178 @@ const seed = async () => {
       await db.query(
         'INSERT INTO competencies (code, title, description) VALUES ($1, $2, $3)',
         [c.code, c.title, c.description]
+      );
+    }
+
+    // Seed task_competency relationships
+    const task_competency_links = [
+      // BO Initial Tasks
+      { task_id: 1, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-01
+      { task_id: 41, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-LE FIRST AID
+      { task_id: 42, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' },  // IQ-LE CPR
+      { task_id: 43, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-HT-MT-B
+      { task_id: 45, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-JUFE
+      { task_id: 46, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-BUI
+      { task_id: 48, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-PQCI
+      { task_id: 49, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-PQCII
+      { task_id: 50, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-PQCIII
+      { task_id: 51, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-PQCIV
+      { task_id: 52, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-BO-LEQB      
+      { task_id: 55, competency_id: 1, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-OPSBO
+      // BO Recurrent Tasks
+      { task_id: 1, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // 1-01        
+      { task_id: 2, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-02      
+      { task_id: 3, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // 1-03
+      { task_id: 4, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-04
+      { task_id: 5, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-05
+      { task_id: 6, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-06
+      { task_id: 7, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-07
+      { task_id: 8, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-08
+      { task_id: 9, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-09
+      { task_id: 10, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-10
+      { task_id: 11, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-11
+      { task_id: 12, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-12
+      { task_id: 13, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-13
+      { task_id: 14, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-14
+      { task_id: 15, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-15
+      { task_id: 16, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-16
+      { task_id: 17, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-17
+      { task_id: 18, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-18
+      { task_id: 19, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-19
+      { task_id: 20, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-20
+      { task_id: 21, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-21
+      { task_id: 22, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-22
+      { task_id: 23, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-23
+      { task_id: 24, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-24
+      { task_id: 25, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-25
+      { task_id: 26, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-26
+      { task_id: 27, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-27
+      { task_id: 28, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-28
+      { task_id: 29, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-29
+      { task_id: 30, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-01
+      { task_id: 31, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-02
+      { task_id: 32, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-03
+      { task_id: 33, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-04
+      { task_id: 34, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-05
+      { task_id: 35, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-06
+      { task_id: 36, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-07
+      { task_id: 37, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-08
+      { task_id: 38, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-09 
+      { task_id: 39, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-10
+      { task_id: 40, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 2-11      
+      { task_id: 41, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'biennial' }, // LE FIRST AID     
+      { task_id: 42, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'biennial' }, // LE CPR
+      { task_id: 43, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // HT-MT-B
+      { task_id: 45, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // JUFE
+      { task_id: 46, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'annual' }, // BUI
+      { task_id: 48, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // PQCI
+      { task_id: 49, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // PQCII
+      { task_id: 50, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // PQCIII
+      { task_id: 51, competency_id: 1, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // PQCIV
+      // BTM Initial Tasks
+      { task_id: 1, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-01
+      { task_id: 2, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-02
+      { task_id: 3, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-03
+      { task_id: 4, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-04
+      { task_id: 5, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-05
+      { task_id: 6, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-06
+      { task_id: 7, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-07
+      { task_id: 8, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-08
+      { task_id: 9, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-09
+      { task_id: 10, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-10
+      { task_id: 11, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-11
+      { task_id: 12, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-12
+      { task_id: 13, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-13
+      { task_id: 14, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-14
+      { task_id: 15, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-15
+      { task_id: 16, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-16      
+      { task_id: 17, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-17
+      { task_id: 18, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-18
+      { task_id: 19, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-19
+      { task_id: 20, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-20
+      { task_id: 21, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-21
+      { task_id: 22, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-22
+      { task_id: 23, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-23
+      { task_id: 24, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-24
+      { task_id: 25, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-25
+      { task_id: 26, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-26
+      { task_id: 27, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-27
+      { task_id: 28, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-28
+      { task_id: 29, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-29
+      { task_id: 41, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-LE FIRST AID
+      { task_id: 42, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-LE CPR
+      { task_id: 43, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-HT-MT-B
+      { task_id: 45, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-JUFE      
+      { task_id: 48, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-PQCI
+      { task_id: 49, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-PQCII
+      { task_id: 50, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-PQCIII
+      { task_id: 51, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-PQCIV
+      { task_id: 53, competency_id: 2, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-BTM-LEQB
+      // BTM Recurrent Tasks
+      { task_id: 1, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // 1-01        
+      { task_id: 2, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-02      
+      { task_id: 3, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // 1-03
+      { task_id: 4, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-04
+      { task_id: 5, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-05
+      { task_id: 6, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-06
+      { task_id: 7, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-07
+      { task_id: 8, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-08
+      { task_id: 9, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-09
+      { task_id: 10, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-10
+      { task_id: 11, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-11
+      { task_id: 12, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-12
+      { task_id: 13, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-13
+      { task_id: 14, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-14
+      { task_id: 15, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-15
+      { task_id: 16, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-16
+      { task_id: 17, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-17
+      { task_id: 18, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-18
+      { task_id: 19, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-19
+      { task_id: 41, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'biennial' }, // LE FIRST AID     
+      { task_id: 42, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'biennial' }, // LE CPR
+      { task_id: 43, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'annual' }, // HT-MT-B
+      { task_id: 45, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // JUFE
+      { task_id: 48, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // PQCI
+      { task_id: 49, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // PQCII
+      { task_id: 50, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // PQCIII
+      { task_id: 51, competency_id: 2, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // PQCIV
+      // STWatch Initial Tasks
+      { task_id: 1, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-01
+      { task_id: 3, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-03
+      { task_id: 4, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-04
+      { task_id: 5, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-05
+      { task_id: 6, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-06
+      { task_id: 7, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-07
+      { task_id: 8, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-08
+      { task_id: 9, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-09
+      { task_id: 10, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-10
+      { task_id: 17, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-17
+      { task_id: 18, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-18
+      { task_id: 20, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-20
+      { task_id: 22, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-1-22
+      { task_id: 43, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-HT-MT-B
+      { task_id: 44, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-AMIO BRIEF
+      { task_id: 55, competency_id: 3, certification_phase: 'initial', recurrence_type: 'permanent' }, // IQ-STWATCH-LEQB
+      // STWatch Recurrent Tasks
+      { task_id: 1, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // 1-01
+      { task_id: 3, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'semiannual' }, // 1-03
+      { task_id: 4, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-04
+      { task_id: 5, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-05
+      { task_id: 6, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-06
+      { task_id: 7, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-07
+      { task_id: 8, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-08
+      { task_id: 9, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-09
+      { task_id: 10, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-10
+      { task_id: 17, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-17
+      { task_id: 18, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // 1-18
+      { task_id: 43, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' }, // HT-MT-B
+      { task_id: 44, competency_id: 3, certification_phase: 'recurrent', recurrence_type: 'annual' } // AMIO BRIEF
+    ];
+
+    for (let tcl of task_competency_links) {
+      await db.query(
+        'INSERT INTO task_competency_links (task_id, competency_id, certification_phase, recurrence_type) VALUES ($1, $2, $3, $4)',
+        [tcl.task_id, tcl.competency_id, tcl.certification_phase, tcl.recurrence_type]
       );
     }
 
