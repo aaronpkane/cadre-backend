@@ -19,6 +19,12 @@ app.use('/api/tasks', taskRoutes);
 const competencyRoutes = require('./routes/competencies');
 app.use('/api/competencies', competencyRoutes);
 
+const linkRoutes = require('./routes/taskCompetencyLinks');
+app.use('/api/task-competency-links', linkRoutes);
+
+const trainingEventRoutes = require('./routes/trainingEvents');
+app.use('/api/training-events', trainingEventRoutes);
+
 // Backend Health check route
 app.get('/', (req, res) => {
   res.send('Cadre backend is running');
