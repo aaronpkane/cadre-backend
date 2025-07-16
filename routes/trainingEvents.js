@@ -1,20 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const trainingEventsController = require('../controllers/trainingEventsController');
+const { authenticate, authorize } = require('../middleware/auth');
 
-// GET all events
-router.get('/', trainingEventsController.getAllEvents);
-
-// GET single event
-router.get('/:id', trainingEventsController.getEventById);
-
-// POST new event
-router.post('/', trainingEventsController.createEvent);
-
-// PUT update event
-router.put('/:id', trainingEventsController.updateEvent);
-
-// DELETE event
-router.delete('/:id', trainingEventsController.deleteEvent);
+router.get('/', authenticate, authorize(['hq','command','trainer']), trainingEventsController.getAllEvents);
+router.get('/:id', authenticate, authorize(['hq','command','trainer']), trainingEventsController.getEventById);
+router.post('/', authenticate, authorize(['hq','command']), trainingEventsController.createEvent);
+router.put('/:id', authenticate, authorize(['hq','command']), trainingEventsController.updateEvent);
+router.delete('/:id', authenticate, authorize(['hq']), trainingEventsController.deleteEvent);
 
 module.exports = router;
+

@@ -1,6 +1,5 @@
 const express = require('express');
-// DB instance available for future server-level queries
-const db = require('./db');
+const db = require('./db'); // DB instance available for future server-level queries
 const app = express();
 
 require('dotenv').config();
@@ -9,21 +8,31 @@ app.use(express.json());
 
 // Member Routes hook
 const memberRoutes = require('./routes/members');
-app.use('/api/members', memberRoutes);
+app.use('/api/members', memberRoutes); // Members Routes hook
 
-// Task Routes hook
 const taskRoutes = require('./routes/tasks');
-app.use('/api/tasks', taskRoutes);
+app.use('/api/tasks', taskRoutes); // Task Routes hook
 
-// Competency Routes hook
 const competencyRoutes = require('./routes/competencies');
-app.use('/api/competencies', competencyRoutes);
+app.use('/api/competencies', competencyRoutes); // Competency Routes hook
 
 const linkRoutes = require('./routes/taskCompetencyLinks');
-app.use('/api/task-competency-links', linkRoutes);
+app.use('/api/task-competency-links', linkRoutes); // Task-Competency Link Routes hook
 
 const trainingEventRoutes = require('./routes/trainingEvents');
-app.use('/api/training-events', trainingEventRoutes);
+app.use('/api/training-events', trainingEventRoutes); // Training Event Routes hook
+
+const trainingEventAttendeesRoutes = require('./routes/trainingEventAttendees');
+app.use('/api/training-event-attendees', trainingEventAttendeesRoutes); // Training Event Attendees Routes hook
+
+const taskLogRoutes = require('./routes/taskLogs');
+app.use('/api/task-logs', taskLogRoutes); // Task Logs Routes hook
+
+const certificationRoutes = require('./routes/certifications');
+app.use('/api/certifications', certificationRoutes); // Certifications Routes hook
+
+const authRoutes = require('./routes/auth'); 
+app.use('/api/auth', authRoutes); // Auth Routes hook
 
 // Backend Health check route
 app.get('/', (req, res) => {
