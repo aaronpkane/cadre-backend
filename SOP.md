@@ -27,6 +27,7 @@ Assume I am a total beginner with zero coding experience. Assume I’m stuck in 
 ## Database Schema
 
 ### **users**
+```bash
                                           Table "public.users"
     Column     |            Type             | Collation | Nullable |              Default
 ---------------+-----------------------------+-----------+----------+-----------------------------------
@@ -51,8 +52,10 @@ Referenced by:
     TABLE "certifications" CONSTRAINT "certifications_certified_by_fkey" FOREIGN KEY (certified_by) REFERENCES users(id)
     TABLE "task_logs" CONSTRAINT "task_logs_completed_by_fkey" FOREIGN KEY (completed_by) REFERENCES users(id)
     TABLE "training_events" CONSTRAINT "training_events_created_by_fkey" FOREIGN KEY (created_by) REFERENCES users(id)
+```
 
 ### **roles**
+```bash
                                          Table "public.roles"
    Column    |            Type             | Collation | Nullable |              Default
 -------------+-----------------------------+-----------+----------+-----------------------------------
@@ -65,8 +68,10 @@ Indexes:
     "roles_name_key" UNIQUE CONSTRAINT, btree (name)
 Referenced by:
     TABLE "users" CONSTRAINT "users_role_id_fkey" FOREIGN KEY (role_id) REFERENCES roles(id)
+```
 
 ### **units**
+```bash
                                           Table "public.units"
     Column     |            Type             | Collation | Nullable |              Default
 ---------------+-----------------------------+-----------+----------+-----------------------------------
@@ -80,8 +85,10 @@ Indexes:
 Referenced by:
     TABLE "members" CONSTRAINT "members_unit_id_fkey" FOREIGN KEY (unit_id) REFERENCES units(id)
     TABLE "users" CONSTRAINT "users_unit_id_fkey" FOREIGN KEY (unit_id) REFERENCES units(id)
+```
 
 ### **members**
+```bash
                                          Table "public.members"
    Column    |            Type             | Collation | Nullable |               Default
 -------------+-----------------------------+-----------+----------+-------------------------------------
@@ -105,8 +112,10 @@ Referenced by:
     TABLE "task_logs" CONSTRAINT "task_logs_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
     TABLE "training_event_attendees" CONSTRAINT "training_event_attendees_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id)
     TABLE "training_events" CONSTRAINT "training_events_instructor_id_fkey" FOREIGN KEY (instructor_id) REFERENCES members(id)
+```
 
 ### **assignments**
+```bash
                                           Table "public.assignments"
     Column     |            Type             | Collation | Nullable |                 Default
 ---------------+-----------------------------+-----------+----------+-----------------------------------------
@@ -122,8 +131,10 @@ Foreign-key constraints:
     "assignments_assigned_by_fkey" FOREIGN KEY (assigned_by) REFERENCES users(id)
     "assignments_competency_id_fkey" FOREIGN KEY (competency_id) REFERENCES competencies(id)
     "assignments_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id)
+```
 
 ### **competencies**
+```bash
                                          Table "public.competencies"
    Column    |            Type             | Collation | Nullable |                 Default
 -------------+-----------------------------+-----------+----------+------------------------------------------
@@ -140,8 +151,10 @@ Referenced by:
     TABLE "certifications" CONSTRAINT "certifications_competency_id_fkey" FOREIGN KEY (competency_id) REFERENCES competencies(id)
     TABLE "task_competency_links" CONSTRAINT "task_competency_links_competency_id_fkey" FOREIGN KEY (competency_id) REFERENCES competencies(id) ON DELETE CASCADE
     TABLE "training_events" CONSTRAINT "training_events_competency_id_fkey" FOREIGN KEY (competency_id) REFERENCES competencies(id)
+```
 
 ### **tasks**
+```bash
                                          Table "public.tasks"
    Column    |            Type             | Collation | Nullable |              Default
 -------------+-----------------------------+-----------+----------+-----------------------------------
@@ -158,8 +171,10 @@ Referenced by:
     TABLE "task_competency_links" CONSTRAINT "task_competency_links_task_id_fkey" FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
     TABLE "task_completions" CONSTRAINT "task_completions_task_id_fkey" FOREIGN KEY (task_id) REFERENCES tasks(id)
     TABLE "task_logs" CONSTRAINT "task_logs_task_id_fkey" FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+```
 
 ### **task_competency_links**
+```bash
                                    Table "public.task_competency_links"
         Column        |  Type   | Collation | Nullable |                      Default
 ----------------------+---------+-----------+----------+---------------------------------------------------
@@ -179,8 +194,10 @@ Check constraints:
 Foreign-key constraints:
     "task_competency_links_competency_id_fkey" FOREIGN KEY (competency_id) REFERENCES competencies(id) ON DELETE CASCADE
     "task_competency_links_task_id_fkey" FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+```
 
 ### **certifications**
+```bash
                                    Table "public.certifications"
        Column        |  Type   | Collation | Nullable |                  Default
 ---------------------+---------+-----------+----------+--------------------------------------------
@@ -200,8 +217,10 @@ Foreign-key constraints:
     "certifications_certified_by_fkey" FOREIGN KEY (certified_by) REFERENCES users(id)
     "certifications_competency_id_fkey" FOREIGN KEY (competency_id) REFERENCES competencies(id)
     "certifications_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id)
+```
 
 ### **training_events**
+```bash
                                        Table "public.training_events"
     Column     |          Type          | Collation | Nullable |                   Default
 ---------------+------------------------+-----------+----------+---------------------------------------------
@@ -225,8 +244,10 @@ Foreign-key constraints:
     "training_events_instructor_id_fkey" FOREIGN KEY (instructor_id) REFERENCES members(id)
 Referenced by:
     TABLE "training_event_attendees" CONSTRAINT "training_event_attendees_training_event_id_fkey" FOREIGN KEY (training_event_id) REFERENCES training_events(id) ON DELETE CASCADE
+```
 
 ### **training_event_attendees**
+```bash
                                   Table "public.training_event_attendees"
       Column       |  Type   | Collation | Nullable |                       Default
 -------------------+---------+-----------+----------+------------------------------------------------------
@@ -238,8 +259,10 @@ Indexes:
 Foreign-key constraints:
     "training_event_attendees_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id)
     "training_event_attendees_training_event_id_fkey" FOREIGN KEY (training_event_id) REFERENCES training_events(id) ON DELETE CASCADE
+    ```
 
 ### **task_logs**
+```bash
                                    Table "public.task_logs"
        Column        |  Type   | Collation | Nullable |                Default
 ---------------------+---------+-----------+----------+---------------------------------------
@@ -260,8 +283,10 @@ Foreign-key constraints:
     "task_logs_task_id_fkey" FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 Referenced by:
     TABLE "task_completions" CONSTRAINT "task_completions_most_recent_log_id_fkey" FOREIGN KEY (most_recent_log_id) REFERENCES task_logs(id)
+```
 
 ### **audit_log**
+```bash
                                          Table "public.audit_log"
     Column    |            Type             | Collation | Nullable |                Default
 --------------+-----------------------------+-----------+----------+---------------------------------------
@@ -276,6 +301,7 @@ Indexes:
     "audit_log_pkey" PRIMARY KEY, btree (id)
 Foreign-key constraints:
     "audit_log_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id)
+```
 
 ## Authentication & Authorization Implementation
 
@@ -341,6 +367,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 - `DELETE /api/members/:id`
 
 #### routes/members.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const membersController = require('../controllers/membersController');
@@ -353,8 +380,10 @@ router.put('/:id', authenticate, authorize(['hq']), membersController.updateMemb
 router.delete('/:id', authenticate, authorize(['hq']), membersController.deleteMember);
 
 module.exports = router;
+```
 
 #### controllers/membersController.js
+```javascript
 const db = require('../db');
 
 exports.getAllMembers = async (req, res) => {
@@ -421,6 +450,7 @@ exports.deleteMember = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+```
 
 ### **Tasks**
 - `GET /api/tasks`
@@ -430,6 +460,7 @@ exports.deleteMember = async (req, res) => {
 - `DELETE /api/tasks/:id`
 
 #### routes/tasks.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const tasksController = require('../controllers/tasksController');
@@ -442,8 +473,10 @@ router.put('/:id', authenticate, authorize(['hq']), tasksController.updateTask);
 router.delete('/:id', authenticate, authorize(['hq']), tasksController.deleteTask);
 
 module.exports = router;
+```
 
 #### controllers/tasksController.js
+```javascript
 const db = require('../db');
 
 exports.getAllTasks = async (req, res) => {
@@ -513,11 +546,13 @@ exports.deleteTask = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+```
 
 ### **Competencies**
 - Full CRUD implemented
 
 #### routes/competencies.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const competenciesController = require('../controllers/competenciesController');
@@ -530,8 +565,10 @@ router.put('/:id', authenticate, authorize(['hq']), competenciesController.updat
 router.delete('/:id', authenticate, authorize(['hq']), competenciesController.deleteCompetency);
 
 module.exports = router;
+```
 
 #### controllers/competenciesController.js
+```javascript
 const db = require('../db');
 
 exports.getAllCompetencies = async (req, res) => {
@@ -621,6 +658,7 @@ exports.deleteCompetency = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+```
 
 ### **Task-Competency Links**
 - `GET /api/task-competency-links` (filters: competency, task)
@@ -629,6 +667,7 @@ exports.deleteCompetency = async (req, res) => {
 - `DELETE /api/task-competency-links/:id`
 
 #### routes/taskCompetencyLinks.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const linksController = require('../controllers/taskCompetencyLinksController');
@@ -640,8 +679,10 @@ router.post('/', authenticate, authorize(['hq']), linksController.createLink);
 router.delete('/:id', authenticate, authorize(['hq']), linksController.deleteLink);
 
 module.exports = router;
+```
 
 #### controller/taskCompetencyLinksController.js
+```javascript
 const db = require('../db');
 
 exports.getAllLinks = async (req, res) => {
@@ -725,6 +766,7 @@ exports.deleteLink = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+```
 
 ### **Training Events**
 - CRUD implemented
@@ -734,6 +776,7 @@ exports.deleteLink = async (req, res) => {
   - `DELETE /api/training-events/:id/attendees/:attendeeId`
 
 #### routes/trainingEvents.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const trainingEventsController = require('../controllers/trainingEventsController');
@@ -746,8 +789,10 @@ router.put('/:id', authenticate, authorize(['hq','command']), trainingEventsCont
 router.delete('/:id', authenticate, authorize(['hq']), trainingEventsController.deleteEvent);
 
 module.exports = router;
+```
 
 #### routes/trainingEventAttendees.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/trainingEventAttendeesController');
@@ -760,8 +805,10 @@ router.put('/:id', authenticate, authorize(['hq','command']), controller.updateA
 router.delete('/:id', authenticate, authorize(['hq','command']), controller.deleteAttendee);
 
 module.exports = router;
+```
 
 #### controller/trainingEventsController.js
+```javascript
 const db = require('../db');
 
 exports.getAllEvents = async (req, res) => {
@@ -839,8 +886,10 @@ exports.deleteEvent = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+```
 
 #### controllers/trainingEventAttendeesController.js
+```javascript
 const db = require('../db');
 
 exports.getAllAttendees = async (req, res) => {
@@ -926,6 +975,7 @@ exports.deleteAttendee = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+```
 
 ### **Task Logs**
 - `GET /api/task-logs` (filters supported)
@@ -933,6 +983,7 @@ exports.deleteAttendee = async (req, res) => {
 - `DELETE /api/task-logs/:id`
 
 #### routes/taskLogs.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const taskLogsController = require('../controllers/taskLogsController');
@@ -943,8 +994,10 @@ router.post('/', authenticate, authorize(['hq','command','trainer']), taskLogsCo
 router.delete('/:id', authenticate, authorize(['hq','command']), taskLogsController.deleteLog);
 
 module.exports = router;
+```
 
 #### controllers/taskLogsController.js
+```javascript
 const db = require('../db');
 
 exports.getAllLogs = async (req, res) => {
@@ -1042,6 +1095,7 @@ exports.deleteLog = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+```
 
 ### **Certifications**
 - Basic CRUD implemented
@@ -1049,6 +1103,7 @@ exports.deleteLog = async (req, res) => {
 - Role-based access and audit logging planned but pending JWT integration
 
 #### routes/certifications.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const certificationsController = require('../controllers/certificationsController');
@@ -1060,8 +1115,10 @@ router.post('/', authenticate, authorize(['hq','command']), certificationsContro
 router.delete('/:id', authenticate, authorize(['hq']), certificationsController.deleteCertification);
 
 module.exports = router;
+```
 
 #### controllers/certificationsController.js
+```javascript
 const db = require('../db');
 
 exports.getAllCertifications = async (req, res) => {
@@ -1165,6 +1222,7 @@ exports.deleteCertification = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+```
 
 ### **JWT Auth**
 - Route configured
@@ -1172,6 +1230,7 @@ exports.deleteCertification = async (req, res) => {
 - Middleware configured
 
 #### routes/auth.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
@@ -1204,8 +1263,10 @@ router.post('/login', async (req, res) => {
 });
 
 module.exports = router;
+```
 
 #### middleware/auth.js
+```javascript
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -1233,8 +1294,10 @@ function authorize(roles = []) {
 }
 
 module.exports = { authenticate, authorize };
+```
 
 ### **Current server.js (07/15/2025)**
+```javascript
 const express = require('express');
 const db = require('./db'); // DB instance available for future server-level queries
 const app = express();
@@ -1285,6 +1348,7 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Server live on port ${PORT}`);
 });
+```
 
 ---
 
