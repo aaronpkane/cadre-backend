@@ -372,14 +372,17 @@ const express = require('express');
 const router = express.Router();
 const membersController = require('../controllers/membersController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { withAudit } = require('../middleware/auditMiddleware');
 
 router.get('/', authenticate, authorize(['hq','command']), membersController.getAllMembers);
 router.get('/:id', authenticate, authorize(['hq','command']), membersController.getMemberById);
-router.post('/', authenticate, authorize(['hq']), membersController.createMember);
-router.put('/:id', authenticate, authorize(['hq']), membersController.updateMember);
-router.delete('/:id', authenticate, authorize(['hq']), membersController.deleteMember);
+
+router.post('/', authenticate, authorize(['hq']), withAudit('members'), membersController.createMember);
+router.put('/:id', authenticate, authorize(['hq']), withAudit('members'), membersController.updateMember);
+router.delete('/:id', authenticate, authorize(['hq']), withAudit('members'), membersController.deleteMember);
 
 module.exports = router;
+
 ```
 
 #### controllers/membersController.js
@@ -465,12 +468,16 @@ const express = require('express');
 const router = express.Router();
 const tasksController = require('../controllers/tasksController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { withAudit } = require('../middleware/auditMiddleware');
 
 router.get('/', authenticate, authorize(['hq','command','trainer']), tasksController.getAllTasks);
 router.get('/:id', authenticate, authorize(['hq','command','trainer']), tasksController.getTaskById);
-router.post('/', authenticate, authorize(['hq']), tasksController.createTask);
-router.put('/:id', authenticate, authorize(['hq']), tasksController.updateTask);
-router.delete('/:id', authenticate, authorize(['hq']), tasksController.deleteTask);
+router.post('/', authenticate, authorize(['hq']), withAudit('tasks'), tasksController.createTask);
+router.put('/:id', authenticate, authorize(['hq']), withAudit('tasks'), tasksController.updateTask);
+router.delete('/:id', authenticate, authorize(['hq']), withAudit('tasks'), tasksController.deleteTask);
+
+module.exports = router;
+
 
 module.exports = router;
 ```
@@ -557,14 +564,17 @@ const express = require('express');
 const router = express.Router();
 const competenciesController = require('../controllers/competenciesController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { withAudit } = require('../middleware/auditMiddleware');
 
 router.get('/', authenticate, authorize(['hq','command','trainer']), competenciesController.getAllCompetencies);
 router.get('/:id', authenticate, authorize(['hq','command','trainer']), competenciesController.getCompetencyById);
-router.post('/', authenticate, authorize(['hq']), competenciesController.createCompetency);
-router.put('/:id', authenticate, authorize(['hq']), competenciesController.updateCompetency);
-router.delete('/:id', authenticate, authorize(['hq']), competenciesController.deleteCompetency);
+
+router.post('/', authenticate, authorize(['hq']), withAudit('competencies'), competenciesController.createCompetency);
+router.put('/:id', authenticate, authorize(['hq']), withAudit('competencies'), competenciesController.updateCompetency);
+router.delete('/:id', authenticate, authorize(['hq']), withAudit('competencies'), competenciesController.deleteCompetency);
 
 module.exports = router;
+
 ```
 
 #### controllers/competenciesController.js
@@ -672,13 +682,16 @@ const express = require('express');
 const router = express.Router();
 const linksController = require('../controllers/taskCompetencyLinksController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { withAudit } = require('../middleware/auditMiddleware');
 
 router.get('/', authenticate, authorize(['hq','command','trainer']), linksController.getAllLinks);
 router.get('/:id', authenticate, authorize(['hq','command','trainer']), linksController.getLinkById);
-router.post('/', authenticate, authorize(['hq']), linksController.createLink);
-router.delete('/:id', authenticate, authorize(['hq']), linksController.deleteLink);
+
+router.post('/', authenticate, authorize(['hq']), withAudit('task_competency_links'), linksController.createLink);
+router.delete('/:id', authenticate, authorize(['hq']), withAudit('task_competency_links'), linksController.deleteLink);
 
 module.exports = router;
+
 ```
 
 #### controller/taskCompetencyLinksController.js
@@ -781,14 +794,17 @@ const express = require('express');
 const router = express.Router();
 const trainingEventsController = require('../controllers/trainingEventsController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { withAudit } = require('../middleware/auditMiddleware');
 
 router.get('/', authenticate, authorize(['hq','command','trainer']), trainingEventsController.getAllEvents);
 router.get('/:id', authenticate, authorize(['hq','command','trainer']), trainingEventsController.getEventById);
-router.post('/', authenticate, authorize(['hq','command']), trainingEventsController.createEvent);
-router.put('/:id', authenticate, authorize(['hq','command']), trainingEventsController.updateEvent);
-router.delete('/:id', authenticate, authorize(['hq']), trainingEventsController.deleteEvent);
+
+router.post('/', authenticate, authorize(['hq','command']), withAudit('training_events'), trainingEventsController.createEvent);
+router.put('/:id', authenticate, authorize(['hq','command']), withAudit('training_events'), trainingEventsController.updateEvent);
+router.delete('/:id', authenticate, authorize(['hq']), withAudit('training_events'), trainingEventsController.deleteEvent);
 
 module.exports = router;
+
 ```
 
 #### routes/trainingEventAttendees.js
@@ -797,14 +813,17 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/trainingEventAttendeesController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { withAudit } = require('../middleware/auditMiddleware');
 
 router.get('/', authenticate, authorize(['hq','command']), controller.getAllAttendees);
 router.get('/:id', authenticate, authorize(['hq','command']), controller.getAttendeeById);
-router.post('/', authenticate, authorize(['hq','command']), controller.addAttendee);
-router.put('/:id', authenticate, authorize(['hq','command']), controller.updateAttendee);
-router.delete('/:id', authenticate, authorize(['hq','command']), controller.deleteAttendee);
+
+router.post('/', authenticate, authorize(['hq','command']), withAudit('training_event_attendees'), controller.addAttendee);
+router.put('/:id', authenticate, authorize(['hq','command']), withAudit('training_event_attendees'), controller.updateAttendee);
+router.delete('/:id', authenticate, authorize(['hq','command']), withAudit('training_event_attendees'), controller.deleteAttendee);
 
 module.exports = router;
+
 ```
 
 #### controller/trainingEventsController.js
@@ -988,12 +1007,15 @@ const express = require('express');
 const router = express.Router();
 const taskLogsController = require('../controllers/taskLogsController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { withAudit } = require('../middleware/auditMiddleware');
 
 router.get('/', authenticate, authorize(['hq','command','trainer']), taskLogsController.getAllLogs);
-router.post('/', authenticate, authorize(['hq','command','trainer']), taskLogsController.createLogs);
-router.delete('/:id', authenticate, authorize(['hq','command']), taskLogsController.deleteLog);
+
+router.post('/', authenticate, authorize(['hq','command','trainer']), withAudit('task_logs'), taskLogsController.createLogs);
+router.delete('/:id', authenticate, authorize(['hq','command']), withAudit('task_logs'), taskLogsController.deleteLog);
 
 module.exports = router;
+
 ```
 
 #### controllers/taskLogsController.js
@@ -1108,13 +1130,16 @@ const express = require('express');
 const router = express.Router();
 const certificationsController = require('../controllers/certificationsController');
 const { authenticate, authorize } = require('../middleware/auth');
+const { withAudit } = require('../middleware/auditMiddleware');
 
 router.get('/', authenticate, authorize(['hq','command','trainer']), certificationsController.getAllCertifications);
 router.get('/:id', authenticate, authorize(['hq','command','trainer']), certificationsController.getCertificationById);
-router.post('/', authenticate, authorize(['hq','command']), certificationsController.createCertification);
-router.delete('/:id', authenticate, authorize(['hq']), certificationsController.deleteCertification);
+
+router.post('/', authenticate, authorize(['hq','command']), withAudit('certifications'), certificationsController.createCertification);
+router.delete('/:id', authenticate, authorize(['hq']), withAudit('certifications'), certificationsController.deleteCertification);
 
 module.exports = router;
+
 ```
 
 #### controllers/certificationsController.js
