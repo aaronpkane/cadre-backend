@@ -1,13 +1,14 @@
 const db = require('../db');
+const { successResponse, errorResponse } = require('../utils/response');
 
 // GET all training events
 exports.getAllEvents = async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM training_events ORDER BY date DESC');
-    res.status(200).json(result.rows);
+    return successResponse(res, result.rows, 200);
   } catch (err) {
     console.error('Error fetching training events:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -16,19 +17,24 @@ exports.getEventById = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query('SELECT * FROM training_events WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Event not found' }, 404);
     }
-    res.status(200).json(result.rows[0]);
+    return successResponse(res, result.rows[0], 200);
   } catch (err) {
     console.error('Error fetching event by ID:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
 // CREATE event
 exports.createEvent = async (req, res) => {
   const { title, description, date, start_time, end_time, instructor_id, competency_id, created_by, visibility } = req.body;
+  
+  if (!title || !date || !start_time || !end_time || !instructor_id || !competency_id) {
+    return errorResponse(res, { message: 'Missing required fields: title, date, start_time, end_time, instructor_ id, competency_id' }, 400);
+  }
+
   try {
     const result = await db.query(
       `INSERT INTO training_events 
@@ -37,10 +43,10 @@ exports.createEvent = async (req, res) => {
        RETURNING *`,
       [title, description, date, start_time, end_time, instructor_id, competency_id, created_by, visibility]
     );
-    res.status(201).json(result.rows[0]);
+    return successResponse(res, result.rows[0], 201);
   } catch (err) {
     console.error('Error creating training event:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -48,6 +54,11 @@ exports.createEvent = async (req, res) => {
 exports.updateEvent = async (req, res) => {
   const { id } = req.params;
   const { title, description, date, start_time, end_time, instructor_id, competency_id, visibility } = req.body;
+  
+  if (!title || !date || !start_time || !end_time || !instructor_id || !competency_id) {
+    return errorResponse(res, { message: 'Missing required fields: title, date, start_time, end_time, instructor_ id, competency_id' }, 400);
+  }
+  
   try {
     const result = await db.query(
       `UPDATE training_events SET 
@@ -56,13 +67,13 @@ exports.updateEvent = async (req, res) => {
        WHERE id = $9 RETURNING *`,
       [title, description, date, start_time, end_time, instructor_id, competency_id, visibility, id]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Event not found' }, 400);
     }
-    res.status(200).json(result.rows[0]);
+    return successResponse(res, result.rows[0], 200);
   } catch (err) {
     console.error('Error updating training event:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -71,12 +82,12 @@ exports.deleteEvent = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query('DELETE FROM training_events WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Event not found' }, 404);
     }
-    res.status(200).json({ message: 'Event deleted successfully' });
+    return successResponse(res, { message: 'Event deleted successfully' }, 200);
   } catch (err) {
     console.error('Error deleting training event:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };

@@ -2,15 +2,16 @@
 // It handles the logic for fetching, creating, updating, and deleting tasks.
 
 const db = require('../db');
+const { successResponse, errorResponse } = require('../utils/response');
 
 // GET all tasks
 exports.getAllTasks = async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM tasks ORDER BY code ASC');
-    res.status(200).json(result.rows);
+    return successResponse(res, result.rows, 200);
   } catch (err) {
     console.error('Error fetching tasks:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -19,19 +20,24 @@ exports.getTaskById = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query('SELECT * FROM tasks WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Task not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Task not found' }, 404);
     }
-    res.json(result.rows[0]);
+    return successResponse(res, result.rows[0], 200);
   } catch (err) {
     console.error('Error fetching task:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
 // POST new task
 exports.createTask = async (req, res) => {
   const { code, title, description } = req.body;
+
+  if (!code || !title) {
+    return errorResponse(res, { message: 'Missing required fields: code, title' }, 400);
+  }
+
   try {
     console.log('Creating task with data:', { code, title, description });
     const result = await db.query(
@@ -39,10 +45,10 @@ exports.createTask = async (req, res) => {
       [code, title, description]
     );
     console.log('Inserted task result:', result.rows[0]);
-    res.status(201).json(result.rows[0]);
+    return successResponse(res, result.rows[0], 201);
   } catch (err) {
     console.error('Error creating task:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -50,16 +56,23 @@ exports.createTask = async (req, res) => {
 exports.updateTask = async (req, res) => {
   const { id } = req.params;
   const { code, title, description } = req.body;
+
+  if (!code || !title) {
+    return errorResponse(res, { message: 'Missing required fields: code, title' }, 400);
+  }
+
   try {
     const result = await db.query(
       'UPDATE tasks SET code = $1, title = $2, description = $3 WHERE id = $4 RETURNING *',
       [code, title, description, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Task not found' });
-    res.json(result.rows[0]);
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Task not found' }, 404);
+    }
+    return successResponse(res, result.rows[0], 200);
   } catch (err) {
     console.error('Error updating task:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -68,10 +81,12 @@ exports.deleteTask = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query('DELETE FROM tasks WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Task not found' });
-    res.json({ message: 'Task deleted' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Task not found' }, 404);
+    }
+    return successResponse(res, { message: 'Task deleted' }, 200);
   } catch (err) {
     console.error('Error deleting task:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };

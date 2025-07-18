@@ -355,1027 +355,79 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ---
 
----
-
 ## API Routes Completed
 
-### **Members**
-- `GET /api/members` (all)
-- `GET /api/members/:id`
-- `POST /api/members`
-- `PUT /api/members/:id`
-- `DELETE /api/members/:id`
-
-#### routes/members.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const membersController = require('../controllers/membersController');
-const { authenticate, authorize } = require('../middleware/auth');
-const { withAudit } = require('../middleware/auditMiddleware');
-
-router.get('/', authenticate, authorize(['hq','command']), membersController.getAllMembers);
-router.get('/:id', authenticate, authorize(['hq','command']), membersController.getMemberById);
-
-router.post('/', authenticate, authorize(['hq']), withAudit('members'), membersController.createMember);
-router.put('/:id', authenticate, authorize(['hq']), withAudit('members'), membersController.updateMember);
-router.delete('/:id', authenticate, authorize(['hq']), withAudit('members'), membersController.deleteMember);
-
-module.exports = router;
-
-```
-
-#### controllers/membersController.js
-```javascript
-const db = require('../db');
-
-exports.getAllMembers = async (req, res) => {
-  try {
-    const result = await db.query('SELECT * FROM members ORDER BY last_name ASC');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Error fetching members' });
-  }
-};
-
-exports.getMemberById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('SELECT * FROM members WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Member not found' });
-    }
-    res.status(200).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error fetching member:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.createMember = async (req, res) => {
-  const { first_name, last_name, employee_id, unit_id, email, rate_rank } = req.body;
-  try {
-    const result = await db.query(
-      'INSERT INTO members (first_name, last_name, employee_id, unit_id, email, rate_rank) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [first_name, last_name, employee_id, unit_id, email, rate_rank]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating member:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.updateMember = async (req, res) => {
-  const { id } = req.params;
-  const { first_name, last_name, employee_id, unit_id, email, rate_rank } = req.body;
-  try {
-    const result = await db.query(
-      'UPDATE members SET first_name = $1, last_name = $2, employee_id = $3, unit_id = $4, email = $5, rate_rank = $6 WHERE id = $7 RETURNING *',
-      [first_name, last_name, employee_id, unit_id, email, rate_rank, id]
-    );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Member not found' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error updating member:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.deleteMember = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('DELETE FROM members WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Member not found' });
-    res.json({ message: 'Member deleted' });
-  } catch (err) {
-    console.error('Error deleting member:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-```
-
-### **Tasks**
-- `GET /api/tasks`
-- `GET /api/tasks/:id`
-- `POST /api/tasks`
-- `PUT /api/tasks/:id`
-- `DELETE /api/tasks/:id`
-
-#### routes/tasks.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const tasksController = require('../controllers/tasksController');
-const { authenticate, authorize } = require('../middleware/auth');
-const { withAudit } = require('../middleware/auditMiddleware');
-
-router.get('/', authenticate, authorize(['hq','command','trainer']), tasksController.getAllTasks);
-router.get('/:id', authenticate, authorize(['hq','command','trainer']), tasksController.getTaskById);
-router.post('/', authenticate, authorize(['hq']), withAudit('tasks'), tasksController.createTask);
-router.put('/:id', authenticate, authorize(['hq']), withAudit('tasks'), tasksController.updateTask);
-router.delete('/:id', authenticate, authorize(['hq']), withAudit('tasks'), tasksController.deleteTask);
-
-module.exports = router;
-
-
-module.exports = router;
-```
-
-#### controllers/tasksController.js
-```javascript
-const db = require('../db');
-
-exports.getAllTasks = async (req, res) => {
-  try {
-    const result = await db.query('SELECT * FROM tasks ORDER BY code ASC');
-    res.status(200).json(result.rows);
-  } catch (err) {
-    console.error('Error fetching tasks:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.getTaskById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('SELECT * FROM tasks WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error fetching task:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.createTask = async (req, res) => {
-  const { code, title, description } = req.body;
-  try {
-    console.log('Creating task with data:', { code, title, description });
-    const result = await db.query(
-      'INSERT INTO tasks (code, title, description) VALUES ($1, $2, $3) RETURNING *',
-      [code, title, description]
-    );
-    console.log('Inserted task result:', result.rows[0]);
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating task:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.updateTask = async (req, res) => {
-  const { id } = req.params;
-  const { code, title, description } = req.body;
-  try {
-    const result = await db.query(
-      'UPDATE tasks SET code = $1, title = $2, description = $3 WHERE id = $4 RETURNING *',
-      [code, title, description, id]
-    );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Task not found' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error updating task:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.deleteTask = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('DELETE FROM tasks WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Task not found' });
-    res.json({ message: 'Task deleted' });
-  } catch (err) {
-    console.error('Error deleting task:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-```
-
-### **Competencies**
-- Full CRUD implemented
-
-#### routes/competencies.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const competenciesController = require('../controllers/competenciesController');
-const { authenticate, authorize } = require('../middleware/auth');
-const { withAudit } = require('../middleware/auditMiddleware');
-
-router.get('/', authenticate, authorize(['hq','command','trainer']), competenciesController.getAllCompetencies);
-router.get('/:id', authenticate, authorize(['hq','command','trainer']), competenciesController.getCompetencyById);
-
-router.post('/', authenticate, authorize(['hq']), withAudit('competencies'), competenciesController.createCompetency);
-router.put('/:id', authenticate, authorize(['hq']), withAudit('competencies'), competenciesController.updateCompetency);
-router.delete('/:id', authenticate, authorize(['hq']), withAudit('competencies'), competenciesController.deleteCompetency);
-
-module.exports = router;
-
-```
-
-#### controllers/competenciesController.js
-```javascript
-const db = require('../db');
-
-exports.getAllCompetencies = async (req, res) => {
-  console.log('GET /api/competencies');
-  try {
-    const result = await db.query(
-      'SELECT * FROM competencies ORDER BY code ASC'
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching competencies:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.getCompetencyById = async (req, res) => {
-  const { id } = req.params;
-  console.log(`GET /api/competencies/${id}`);
-  try {
-    const result = await db.query(
-      'SELECT * FROM competencies WHERE id = $1',
-      [id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Competency not found' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error fetching competency:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.createCompetency = async (req, res) => {
-  console.log('POST /api/competencies', req.body);
-  const { code, title, description } = req.body;
-  try {
-    const result = await db.query(
-      `INSERT INTO competencies (code, title, description)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [code, title, description]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating competency:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.updateCompetency = async (req, res) => {
-  const { id } = req.params;
-  console.log(`PUT /api/competencies/${id}`, req.body);
-  const { code, title, description } = req.body;
-  try {
-    const result = await db.query(
-      `UPDATE competencies
-       SET code = $1, title = $2, description = $3
-       WHERE id = $4
-       RETURNING *`,
-      [code, title, description, id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Competency not found' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error updating competency:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.deleteCompetency = async (req, res) => {
-  const { id } = req.params;
-  console.log(`DELETE /api/competencies/${id}`);
-  try {
-    const result = await db.query(
-      'DELETE FROM competencies WHERE id = $1 RETURNING *',
-      [id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Competency not found' });
-    }
-    res.json({ message: 'Competency deleted' });
-  } catch (err) {
-    console.error('Error deleting competency:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-```
-
-### **Task-Competency Links**
-- `GET /api/task-competency-links` (filters: competency, task)
-- `GET /api/task-competency-links/:id`
-- `POST /api/task-competency-links`
-- `DELETE /api/task-competency-links/:id`
-
-#### routes/taskCompetencyLinks.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const linksController = require('../controllers/taskCompetencyLinksController');
-const { authenticate, authorize } = require('../middleware/auth');
-const { withAudit } = require('../middleware/auditMiddleware');
-
-router.get('/', authenticate, authorize(['hq','command','trainer']), linksController.getAllLinks);
-router.get('/:id', authenticate, authorize(['hq','command','trainer']), linksController.getLinkById);
-
-router.post('/', authenticate, authorize(['hq']), withAudit('task_competency_links'), linksController.createLink);
-router.delete('/:id', authenticate, authorize(['hq']), withAudit('task_competency_links'), linksController.deleteLink);
-
-module.exports = router;
-
-```
-
-#### controller/taskCompetencyLinksController.js
-```javascript
-const db = require('../db');
-
-exports.getAllLinks = async (req, res) => {
-  const { competency, task } = req.query;
-  console.log('GET /api/task-competency-links', { competency, task });
-  
-  let sql = 'SELECT * FROM task_competency_links';
-  const params = [];
-  const clauses = [];
-
-  if (competency) {
-    params.push(competency);
-    clauses.push(`competency_id = $${params.length}`);
-  }
-  if (task) {
-    params.push(task);
-    clauses.push(`task_id = $${params.length}`);
-  }
-  if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
-  sql += ' ORDER BY competency_id, task_id';
-
-  try {
-    const result = await db.query(sql, params);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching links:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.getLinkById = async (req, res) => {
-  const { id } = req.params;
-  console.log(`GET /api/task-competency-links/${id}`);
-  try {
-    const result = await db.query(
-      'SELECT * FROM task_competency_links WHERE id = $1',
-      [id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Link not found' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error fetching link:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.createLink = async (req, res) => {
-  console.log('POST /api/task-competency-links', req.body);
-  const { task_id, competency_id, certification_phase, recurrence_type } = req.body;
-  try {
-    const result = await db.query(
-      `INSERT INTO task_competency_links
-         (task_id, competency_id, certification_phase, recurrence_type)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [task_id, competency_id, certification_phase, recurrence_type]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating link:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.deleteLink = async (req, res) => {
-  const { id } = req.params;
-  console.log(`DELETE /api/task-competency-links/${id}`);
-  try {
-    const result = await db.query(
-      'DELETE FROM task_competency_links WHERE id = $1 RETURNING *',
-      [id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Link not found' });
-    }
-    res.json({ message: 'Link deleted' });
-  } catch (err) {
-    console.error('Error deleting link:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-```
-
-### **Training Events**
-- CRUD implemented
-- Attendees:
-  - `GET /api/training-events/:id/attendees`
-  - `POST /api/training-events/:id/attendees` (bulk supported)
-  - `DELETE /api/training-events/:id/attendees/:attendeeId`
-
-#### routes/trainingEvents.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const trainingEventsController = require('../controllers/trainingEventsController');
-const { authenticate, authorize } = require('../middleware/auth');
-const { withAudit } = require('../middleware/auditMiddleware');
-
-router.get('/', authenticate, authorize(['hq','command','trainer']), trainingEventsController.getAllEvents);
-router.get('/:id', authenticate, authorize(['hq','command','trainer']), trainingEventsController.getEventById);
-
-router.post('/', authenticate, authorize(['hq','command']), withAudit('training_events'), trainingEventsController.createEvent);
-router.put('/:id', authenticate, authorize(['hq','command']), withAudit('training_events'), trainingEventsController.updateEvent);
-router.delete('/:id', authenticate, authorize(['hq']), withAudit('training_events'), trainingEventsController.deleteEvent);
-
-module.exports = router;
-
-```
-
-#### routes/trainingEventAttendees.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const controller = require('../controllers/trainingEventAttendeesController');
-const { authenticate, authorize } = require('../middleware/auth');
-const { withAudit } = require('../middleware/auditMiddleware');
-
-router.get('/', authenticate, authorize(['hq','command']), controller.getAllAttendees);
-router.get('/:id', authenticate, authorize(['hq','command']), controller.getAttendeeById);
-
-router.post('/', authenticate, authorize(['hq','command']), withAudit('training_event_attendees'), controller.addAttendee);
-router.put('/:id', authenticate, authorize(['hq','command']), withAudit('training_event_attendees'), controller.updateAttendee);
-router.delete('/:id', authenticate, authorize(['hq','command']), withAudit('training_event_attendees'), controller.deleteAttendee);
-
-module.exports = router;
-
-```
-
-#### controller/trainingEventsController.js
-```javascript
-const db = require('../db');
-
-exports.getAllEvents = async (req, res) => {
-  try {
-    const result = await db.query('SELECT * FROM training_events ORDER BY date DESC');
-    res.status(200).json(result.rows);
-  } catch (err) {
-    console.error('Error fetching training events:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.getEventById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('SELECT * FROM training_events WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-    res.status(200).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error fetching event by ID:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.createEvent = async (req, res) => {
-  const { title, description, date, start_time, end_time, instructor_id, competency_id, created_by, visibility } = req.body;
-  try {
-    const result = await db.query(
-      `INSERT INTO training_events 
-        (title, description, date, start_time, end_time, instructor_id, competency_id, created_by, visibility)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
-      [title, description, date, start_time, end_time, instructor_id, competency_id, created_by, visibility]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating training event:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.updateEvent = async (req, res) => {
-  const { id } = req.params;
-  const { title, description, date, start_time, end_time, instructor_id, competency_id, visibility } = req.body;
-  try {
-    const result = await db.query(
-      `UPDATE training_events SET 
-        title = $1, description = $2, date = $3, start_time = $4, end_time = $5, 
-        instructor_id = $6, competency_id = $7, visibility = $8
-       WHERE id = $9 RETURNING *`,
-      [title, description, date, start_time, end_time, instructor_id, competency_id, visibility, id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-    res.status(200).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error updating training event:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.deleteEvent = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('DELETE FROM training_events WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-    res.status(200).json({ message: 'Event deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting training event:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-```
-
-#### controllers/trainingEventAttendeesController.js
-```javascript
-const db = require('../db');
-
-exports.getAllAttendees = async (req, res) => {
-  try {
-    const result = await db.query('SELECT * FROM training_event_attendees');
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching attendees:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.getAttendeeById = async (req, res) => {
-  const id = req.params.id;
-  try {
-    const result = await db.query('SELECT * FROM training_event_attendees WHERE id = $1', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Attendee not found' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error fetching attendee:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.addAttendee = async (req, res) => {
-  const input = req.body;
-
-  // Normalize input to array
-  const attendees = Array.isArray(input) ? input : [input];
-
-  // Validate all entries
-  for (const a of attendees) {
-    if (!a.training_event_id || !a.member_id) {
-      return res.status(400).json({ error: 'Missing training_event_id or member_id in one or more objects' });
-    }
-  }
-
-  try {
-    const insertValues = attendees.map(
-      (a, idx) => `($${idx * 2 + 1}, $${idx * 2 + 2})`
-    ).join(', ');
-
-    const flatValues = attendees.flatMap(a => [a.training_event_id, a.member_id]);
-
-    const query = `
-      INSERT INTO training_event_attendees (training_event_id, member_id)
-      VALUES ${insertValues}
-      RETURNING *
-    `;
-
-    const result = await db.query(query, flatValues);
-    res.status(201).json(result.rows);
-  } catch (err) {
-    console.error('Error adding attendee(s):', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.updateAttendee = async (req, res) => {
-  const id = req.params.id;
-  const { training_event_id, member_id } = req.body;
-  try {
-    const result = await db.query(
-      'UPDATE training_event_attendees SET training_event_id = $1, member_id = $2 WHERE id = $3 RETURNING *',
-      [training_event_id, member_id, id]
-    );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Attendee not found' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error updating attendee:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.deleteAttendee = async (req, res) => {
-  const id = req.params.id;
-  try {
-    const result = await db.query('DELETE FROM training_event_attendees WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Attendee not found' });
-    res.json({ message: 'Attendee deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting attendee:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-```
-
-### **Task Logs**
-- `GET /api/task-logs` (filters supported)
-- `POST /api/task-logs` (bulk supported)
-- `DELETE /api/task-logs/:id`
-
-#### routes/taskLogs.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const taskLogsController = require('../controllers/taskLogsController');
-const { authenticate, authorize } = require('../middleware/auth');
-const { withAudit } = require('../middleware/auditMiddleware');
-
-router.get('/', authenticate, authorize(['hq','command','trainer']), taskLogsController.getAllLogs);
-
-router.post('/', authenticate, authorize(['hq','command','trainer']), withAudit('task_logs'), taskLogsController.createLogs);
-router.delete('/:id', authenticate, authorize(['hq','command']), withAudit('task_logs'), taskLogsController.deleteLog);
-
-module.exports = router;
-
-```
-
-#### controllers/taskLogsController.js
-```javascript
-const db = require('../db');
-
-exports.getAllLogs = async (req, res) => {
-  try {
-    const { member_id, task_id, competency_id, start_date, end_date } = req.query;
-    let sql = `
-      SELECT tl.*, m.first_name AS member_first_name, m.last_name AS member_last_name,
-             t.code AS task_code, t.title AS task_title
-        FROM task_logs tl
-        JOIN members m ON tl.member_id = m.id
-        JOIN tasks t ON tl.task_id = t.id
-    `;
-    const conditions = [];
-    const params = [];
-
-    if (member_id) {
-      params.push(member_id);
-      conditions.push(`tl.member_id = $${params.length}`);
-    }
-    if (task_id) {
-      params.push(task_id);
-      conditions.push(`tl.task_id = $${params.length}`);
-    }
-    if (start_date) {
-      params.push(start_date);
-      conditions.push(`tl.date_completed >= $${params.length}`);
-    }
-    if (end_date) {
-      params.push(end_date);
-      conditions.push(`tl.date_completed <= $${params.length}`);
-    }
-
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    sql += ' ORDER BY tl.date_completed DESC';
-
-    const result = await db.query(sql, params);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching task logs:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.createLogs = async (req, res) => {
-  const input = req.body;
-
-  // Normalize input to array
-  const logs = Array.isArray(input) ? input : [input];
-
-  for (const log of logs) {
-    if (!log.task_id || !log.member_id || !log.date_completed || !log.instructor_id) {
-      return res.status(400).json({ error: 'Missing required fields in one or more objects' });
-    }
-  }
-
-  try {
-    const values = logs
-      .map((l, idx) => `($${idx * 4 + 1}, $${idx * 4 + 2}, $${idx * 4 + 3}, $${idx * 4 + 4})`)
-      .join(', ');
-
-    const flatValues = logs.flatMap(l => [
-      l.task_id,
-      l.member_id,
-      l.date_completed,
-      l.instructor_id
-    ]);
-
-    const query = `
-      INSERT INTO task_logs (task_id, member_id, date_completed, instructor_id)
-      VALUES ${values}
-      RETURNING *;
-    `;
-
-    const result = await db.query(query, flatValues);
-    res.status(201).json(result.rows);
-  } catch (err) {
-    console.error('Error creating task logs:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.deleteLog = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('DELETE FROM task_logs WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Log not found' });
-    }
-    res.json({ message: 'Task log deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting task log:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-```
-
-### **Certifications**
-- Basic CRUD implemented
-- Validation logic added for required tasks
-- Role-based access and audit logging planned but pending JWT integration
-
-#### routes/certifications.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const certificationsController = require('../controllers/certificationsController');
-const { authenticate, authorize } = require('../middleware/auth');
-const { withAudit } = require('../middleware/auditMiddleware');
-
-router.get('/', authenticate, authorize(['hq','command','trainer']), certificationsController.getAllCertifications);
-router.get('/:id', authenticate, authorize(['hq','command','trainer']), certificationsController.getCertificationById);
-
-router.post('/', authenticate, authorize(['hq','command']), withAudit('certifications'), certificationsController.createCertification);
-router.delete('/:id', authenticate, authorize(['hq']), withAudit('certifications'), certificationsController.deleteCertification);
-
-module.exports = router;
-
-```
-
-#### controllers/certificationsController.js
-```javascript
-const db = require('../db');
-
-exports.getAllCertifications = async (req, res) => {
-  try {
-    const { member_id, competency_id } = req.query;
-    let sql = `
-      SELECT c.*, m.first_name AS member_first, m.last_name AS member_last,
-             comp.title AS competency_title
-        FROM certifications c
-        JOIN members m ON c.member_id = m.id
-        JOIN competencies comp ON c.competency_id = comp.id
-    `;
-    const params = [];
-    const conditions = [];
-
-    if (member_id) {
-      params.push(member_id);
-      conditions.push(`c.member_id = $${params.length}`);
-    }
-    if (competency_id) {
-      params.push(competency_id);
-      conditions.push(`c.competency_id = $${params.length}`);
-    }
-
-    if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ');
-    sql += ' ORDER BY date_certified DESC';
-
-    const result = await db.query(sql, params);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Error fetching certifications:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.getCertificationById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('SELECT * FROM certifications WHERE id = $1', [id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Certification not found' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error fetching certification:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.createCertification = async (req, res) => {
-  const { member_id, competency_id, certified_by, date_certified } = req.body;
-
-  try {
-    const requiredTasks = await db.query(
-      `SELECT task_id FROM task_competency_links
-        WHERE competency_id = $1 AND certification_phase = 'initial'`,
-      [competency_id]
-    );
-
-    if (!requiredTasks.rows.length) {
-      return res.status(400).json({ error: 'No initial-phase tasks found for this competency' });
-    }
-
-    const taskIds = requiredTasks.rows.map(row => row.task_id);
-
-    const completedTasks = await db.query(
-      `SELECT DISTINCT task_id FROM task_logs
-        WHERE member_id = $1 AND task_id = ANY($2::int[])`,
-      [member_id, taskIds]
-    );
-
-    if (completedTasks.rows.length < taskIds.length) {
-      return res.status(400).json({ 
-        error: 'Member has not completed all required tasks for this competency',
-        details: {
-          required_tasks: taskIds,
-          completed_tasks: completedTasks.rows.map(r => r.task_id)
-        }
-      });
-    }
-
-    const result = await db.query(
-      `INSERT INTO certifications (member_id, competency_id, certified_by, date_certified)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [member_id, competency_id, certified_by, date_certified || new Date()]
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating certification:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-exports.deleteCertification = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query('DELETE FROM certifications WHERE id = $1 RETURNING *', [id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Certification not found' });
-    res.json({ message: 'Certification removed successfully' });
-  } catch (err) {
-    console.error('Error deleting certification:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-```
-
-### **JWT Auth**
-- Route configured
-- Controller missing (07/15/2025)
-- Middleware configured
-
-#### routes/auth.js
-```javascript
-const express = require('express');
-const router = express.Router();
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const pool = require('../db'); // your PostgreSQL pool
-require('dotenv').config();
-
-router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-
-    try {
-        const userResult = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-        if (userResult.rows.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
-
-        const user = userResult.rows[0];
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-
-        const token = jwt.sign(
-            { id: user.id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
-        );
-
-        res.json({ token });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
-module.exports = router;
-```
-
-#### middleware/auth.js
-```javascript
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
-
-// Verify Token
-function authenticate(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Expect "Bearer <token>"
-    if (!token) return res.status(401).json({ message: 'Access token required' });
-
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ message: 'Invalid or expired token' });
-        req.user = user; // {id, role}
-        next();
-    });
-}
-
-// Role-based Authorization
-function authorize(roles = []) {
-    return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
-            return res.status(403).json({ message: 'Forbidden' });
-        }
-        next();
-    };
-}
-
-module.exports = { authenticate, authorize };
-```
-
-### **Current server.js (07/15/2025)**
-```javascript
-const express = require('express');
-const db = require('./db'); // DB instance available for future server-level queries
-const app = express();
-
-require('dotenv').config();
-
-app.use(express.json());
-
-// Member Routes hook
-const memberRoutes = require('./routes/members');
-app.use('/api/members', memberRoutes); // Members Routes hook
-
-const taskRoutes = require('./routes/tasks');
-app.use('/api/tasks', taskRoutes); // Task Routes hook
-
-const competencyRoutes = require('./routes/competencies');
-app.use('/api/competencies', competencyRoutes); // Competency Routes hook
-
-const linkRoutes = require('./routes/taskCompetencyLinks');
-app.use('/api/task-competency-links', linkRoutes); // Task-Competency Link Routes hook
-
-const trainingEventRoutes = require('./routes/trainingEvents');
-app.use('/api/training-events', trainingEventRoutes); // Training Event Routes hook
-
-const trainingEventAttendeesRoutes = require('./routes/trainingEventAttendees');
-app.use('/api/training-event-attendees', trainingEventAttendeesRoutes); // Training Event Attendees Routes hook
-
-const taskLogRoutes = require('./routes/taskLogs');
-app.use('/api/task-logs', taskLogRoutes); // Task Logs Routes hook
-
-const certificationRoutes = require('./routes/certifications');
-app.use('/api/certifications', certificationRoutes); // Certifications Routes hook
-
-const authRoutes = require('./routes/auth'); 
-app.use('/api/auth', authRoutes); // Auth Routes hook
-
-// Backend Health check route
-app.get('/', (req, res) => {
-  res.send('Cadre backend is running');
-});
-
-// Uncomment for testing purposes
-//app.get('/test', (req, res) => {
-  //res.send('✅ Test route works');
-//});
-
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server live on port ${PORT}`);
-});
-```
+## **Authentication**
+- `POST /api/auth/login` → Returns JWT token and user info.
 
 ---
+
+## **Members**
+- `GET /api/members` → Retrieve all members.
+- `GET /api/members/:id` → Retrieve a member by ID.
+- `POST /api/members` → Create a new member.
+- `PUT /api/members/:id` → Update member details.
+- `DELETE /api/members/:id` → Delete a member.
+
+---
+
+## **Tasks**
+- `GET /api/tasks` → Retrieve all tasks.
+- `GET /api/tasks/:id` → Retrieve a task by ID.
+- `POST /api/tasks` → Create a new task.
+- `PUT /api/tasks/:id` → Update a task.
+- `DELETE /api/tasks/:id` → Delete a task.
+
+---
+
+## **Competencies**
+- `GET /api/competencies` → Retrieve all competencies.
+- `GET /api/competencies/:id` → Retrieve a competency by ID.
+- `POST /api/competencies` → Create a new competency.
+- `PUT /api/competencies/:id` → Update a competency.
+- `DELETE /api/competencies/:id` → Delete a competency.
+
+---
+
+## **Certifications**
+- `GET /api/certifications` → Retrieve all certifications.
+- `GET /api/certifications/:id` → Retrieve a certification by ID.
+- `POST /api/certifications` → Create a new certification (with validation logic for required tasks).
+- `PATCH /api/certifications/:id` → Update certification status (`active`, `expired`, `revoked`).
+- `DELETE /api/certifications/:id` → Delete a certification.
+
+---
+
+## **Task-Competency Links**
+- `GET /api/task-competency-links` → Retrieve all links (supports filters: `competency`, `task`).
+- `GET /api/task-competency-links/:id` → Retrieve a specific link.
+- `POST /api/task-competency-links` → Create a new link.
+- `DELETE /api/task-competency-links/:id` → Delete a link.
+
+---
+
+## **Task Logs**
+- `GET /api/task-logs` → Retrieve all task logs (supports filters: `member_id`, `task_id`, `start_date`, `end_date`).
+- `POST /api/task-logs` → Create one or multiple task logs in bulk.
+- `DELETE /api/task-logs/:id` → Delete a task log.
+
+---
+
+## **Training Events**
+- `GET /api/training-events` → Retrieve all training events.
+- `GET /api/training-events/:id` → Retrieve a training event by ID.
+- `POST /api/training-events` → Create a new training event.
+- `PUT /api/training-events/:id` → Update a training event.
+- `DELETE /api/training-events/:id` → Delete a training event.
+
+---
+
+## **Training Event Attendees**
+- `GET /api/training-event-attendees` → Retrieve all attendees.
+- `GET /api/training-event-attendees/:id` → Retrieve an attendee by ID.
+- `POST /api/training-event-attendees` → Add one or multiple attendees.
+- `PUT /api/training-event-attendees/:id` → Update an attendee record.
+- `DELETE /api/training-event-attendees/:id` → Delete an attendee.
 
 ## Features Implemented
 - Bulk inserts for attendees and task logs
@@ -1385,21 +437,61 @@ app.listen(PORT, () => {
 
 ---
 
-## Next Steps (Iteration Mode)
-### **1. Implement Audit Logging**
-- Create a helper function `logAction(userId, action, targetTable, targetId, changeData)`.
-- Capture these actions:
-  - CREATE, UPDATE, DELETE in all protected routes.
-- Insert into `audit_log` table:
-  - `user_id`, `action`, `target_table`, `target_id`, `change_data` (JSON), `timestamp`.
+## Next Steps (Pre-Reports Cleanup)
 
-### **2. Reports API**
-- Unit readiness metrics (certification ratios).
-- Member training history.
-- Export to PDF (future enhancement).
+## ✅ Immediate Tasks
+1. **Finalize Validation Across All Controllers**
+   - Ensure every `POST` and `PUT` route validates required fields consistently.
+   - Confirm proper HTTP status codes (`201` for creation, `200` for updates/deletes, `404` for not found).
 
-### **3. UI/UX Integration**
-- After backend security + logging are done, begin frontend planning.
+2. **Standardize API Response Structure**
+   - All responses use:
+     - Success:
+       ```json
+       { "success": true, "data": { ... } }
+       ```
+     - Error:
+       ```json
+       { "success": false, "error": "Descriptive error message" }
+       ```
+
+3. **Update SOP.md**
+   - Add finalized API standards, status code usage, and validation rules for future developers.
+
+---
+
+## ✅ Next Development Sprint
+- **Postman Collection & Automated Testing**
+  - Build a complete Postman collection with positive and negative test cases.
+  - Implement environment variables for `{{base_url}}` and `{{token}}`.
+
+- **Audit Logging**
+  - Implement `withAudit` middleware to capture:
+    - `user_id`, `action`, `target_table`, `target_id`, `change_data`, `timestamp`.
+
+- **Performance Optimization**
+  - Add DB indexes for high-usage columns:
+    ```sql
+    CREATE INDEX idx_certifications_status ON certifications(status);
+    CREATE INDEX idx_task_logs_member_id ON task_logs(member_id);
+    CREATE INDEX idx_training_events_date ON training_events(date);
+    ```
+
+---
+
+## ✅ Future Enhancements
+- **Reports API**
+  - Unit readiness metrics (certification status by unit).
+  - Member training history.
+  - Competency completion dashboards.
+
+- **UI/UX**
+  - Build a modern frontend with secure authentication.
+  - Integrate charts for readiness and training progress.
+
+- **Role-Based Improvements**
+  - Fine-tune RBAC for command vs HQ privileges.
+  - Add audit visibility for compliance.
 
 ---
 

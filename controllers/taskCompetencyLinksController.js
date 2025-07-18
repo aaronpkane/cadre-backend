@@ -1,4 +1,5 @@
 const db = require('../db');
+const { successResponse, errorResponse } = require('../utils/response');
 
 // GET /api/task-competency-links
 exports.getAllLinks = async (req, res) => {
@@ -23,10 +24,10 @@ exports.getAllLinks = async (req, res) => {
 
   try {
     const result = await db.query(sql, params);
-    res.json(result.rows);
+    return successResponse(res, result.rows, 200);
   } catch (err) {
     console.error('Error fetching links:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -39,13 +40,13 @@ exports.getLinkById = async (req, res) => {
       'SELECT * FROM task_competency_links WHERE id = $1',
       [id]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Link not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Link not found' }, 404);
     }
-    res.json(result.rows[0]);
+    return successResponse(res, result.rows[0], 200);
   } catch (err) {
     console.error('Error fetching link:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -53,6 +54,11 @@ exports.getLinkById = async (req, res) => {
 exports.createLink = async (req, res) => {
   console.log('POST /api/task-competency-links', req.body);
   const { task_id, competency_id, certification_phase, recurrence_type } = req.body;
+
+  if (!task_id || !competency_id || !certification_phase || !recurrence_type) {
+    return errorResponse(res, { message: 'Missing required fields: task_id, competency_id, certification_phase, recurrence_type' }, 400);
+  }
+
   try {
     const result = await db.query(
       `INSERT INTO task_competency_links
@@ -61,10 +67,10 @@ exports.createLink = async (req, res) => {
        RETURNING *`,
       [task_id, competency_id, certification_phase, recurrence_type]
     );
-    res.status(201).json(result.rows[0]);
+    return successResponse(res, result.rows[0], 201);
   } catch (err) {
     console.error('Error creating link:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -77,12 +83,12 @@ exports.deleteLink = async (req, res) => {
       'DELETE FROM task_competency_links WHERE id = $1 RETURNING *',
       [id]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Link not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Link not found' }, 404);
     }
-    res.json({ message: 'Link deleted' });
+    return successResponse(res, { message: 'Link deleted' }, 200);
   } catch (err) {
     console.error('Error deleting link:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };

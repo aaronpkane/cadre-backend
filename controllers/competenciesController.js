@@ -1,4 +1,5 @@
 const db = require('../db');
+const { successResponse, errorResponse } = require('../utils/response');
 
 // GET /api/competencies
 exports.getAllCompetencies = async (req, res) => {
@@ -7,10 +8,10 @@ exports.getAllCompetencies = async (req, res) => {
     const result = await db.query(
       'SELECT * FROM competencies ORDER BY code ASC'
     );
-    res.json(result.rows);
+    return successResponse(res, result.rows, 200);
   } catch (err) {
     console.error('Error fetching competencies:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -23,13 +24,13 @@ exports.getCompetencyById = async (req, res) => {
       'SELECT * FROM competencies WHERE id = $1',
       [id]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Competency not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Competency not found' }, 404);
     }
-    res.json(result.rows[0]);
+    return successResponse(res, result.rows[0], 200);
   } catch (err) {
     console.error('Error fetching competency:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -37,6 +38,11 @@ exports.getCompetencyById = async (req, res) => {
 exports.createCompetency = async (req, res) => {
   console.log('POST /api/competencies', req.body);
   const { code, title, description } = req.body;
+  
+  if (!code || !title) {
+    return errorResponse(res, { message: 'Missing required fields: code, title' }, 400);
+  }
+
   try {
     const result = await db.query(
       `INSERT INTO competencies (code, title, description)
@@ -44,10 +50,10 @@ exports.createCompetency = async (req, res) => {
        RETURNING *`,
       [code, title, description]
     );
-    res.status(201).json(result.rows[0]);
+    return successResponse(res, result.rows[0], 201);
   } catch (err) {
     console.error('Error creating competency:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -56,6 +62,11 @@ exports.updateCompetency = async (req, res) => {
   const { id } = req.params;
   console.log(`PUT /api/competencies/${id}`, req.body);
   const { code, title, description } = req.body;
+
+  if (!code || !title) {
+    return errorResponse(res, { message: 'Missing required fields: code, title' }, 400);
+  }
+  
   try {
     const result = await db.query(
       `UPDATE competencies
@@ -64,13 +75,13 @@ exports.updateCompetency = async (req, res) => {
        RETURNING *`,
       [code, title, description, id]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Competency not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Competency not found' }, 404);
     }
-    res.json(result.rows[0]);
+    return successResponse(res, result.rows[0]);
   } catch (err) {
     console.error('Error updating competency:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -83,12 +94,12 @@ exports.deleteCompetency = async (req, res) => {
       'DELETE FROM competencies WHERE id = $1 RETURNING *',
       [id]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Competency not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Competency not found' }, 404);
     }
-    res.json({ message: 'Competency deleted' });
+    return successResponse(res, { message: 'Competency deleted' }, 200);
   } catch (err) {
     console.error('Error deleting competency:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };

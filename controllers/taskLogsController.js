@@ -1,4 +1,5 @@
 const db = require('../db');
+const { successResponse, errorResponse } = require('../utils/response');
 
 // GET all task logs
 exports.getAllLogs = async (req, res) => {
@@ -38,10 +39,10 @@ exports.getAllLogs = async (req, res) => {
     sql += ' ORDER BY tl.date_completed DESC';
 
     const result = await db.query(sql, params);
-    res.json(result.rows);
+    return successResponse(res, result.rows, 200);
   } catch (err) {
     console.error('Error fetching task logs:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -54,7 +55,7 @@ exports.createLogs = async (req, res) => {
 
   for (const log of logs) {
     if (!log.task_id || !log.member_id || !log.date_completed || !log.instructor_id) {
-      return res.status(400).json({ error: 'Missing required fields in one or more objects' });
+      return errorResponse(res, { message: 'Missing required fields in one or more objects' }, 400);
     }
   }
 
@@ -77,10 +78,10 @@ exports.createLogs = async (req, res) => {
     `;
 
     const result = await db.query(query, flatValues);
-    res.status(201).json(result.rows);
+    return successResponse(res, result.rows, 201);
   } catch (err) {
     console.error('Error creating task logs:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -89,12 +90,12 @@ exports.deleteLog = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query('DELETE FROM task_logs WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Log not found' });
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Log not found' }, 404);
     }
-    res.json({ message: 'Task log deleted successfully' });
+    return successResponse(res, { message: 'Task log deleted successfully' }, 200);
   } catch (err) {
     console.error('Error deleting task log:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };

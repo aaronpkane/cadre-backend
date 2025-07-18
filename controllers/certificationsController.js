@@ -1,4 +1,5 @@
 const db = require('../db');
+const { successResponse, errorResponse } = require('../utils/response');
 
 // GET all certifications
 exports.getAllCertifications = async (req, res) => {
@@ -24,32 +25,38 @@ exports.getAllCertifications = async (req, res) => {
     }
 
     if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ');
-    sql += ' ORDER BY date_certified DESC';
+    sql += ' ORDER BY certification_date DESC';
 
     const result = await db.query(sql, params);
-    res.json(result.rows);
+    return successResponse(res, result.rows, 200);
   } catch (err) {
     console.error('Error fetching certifications:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
-// GET one certification
+// GET Certification by ID
 exports.getCertificationById = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query('SELECT * FROM certifications WHERE id = $1', [id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Certification not found' });
-    res.json(result.rows[0]);
+    if (!result.rows.length) {
+      return errorResponse(res, { message: 'Certification not found' }, 404);
+    }
+    return successResponse(res, result.rows[0], 200);
   } catch (err) {
     console.error('Error fetching certification:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res,'Internal server error', 500);
   }
 };
 
 // POST: Create certification (with validation)
 exports.createCertification = async (req, res) => {
-  const { member_id, competency_id, certified_by, date_certified } = req.body;
+  const { member_id, competency_id, certified_by, certification_phase } = req.body;
+
+  if (!member_id || !competency_id || !certification_phase) {
+    return errorResponse(res, { message: 'Missing required fields: member_id, competency_id, certification_phase' }, 400);
+  }
 
   try {
     // 1. Fetch required initial-phase tasks for this competency
@@ -60,7 +67,7 @@ exports.createCertification = async (req, res) => {
     );
 
     if (!requiredTasks.rows.length) {
-      return res.status(400).json({ error: 'No initial-phase tasks found for this competency' });
+      return errorResponse(res, { message: 'No initial-phase tasks found for this competency' }, 400);
     }
 
     const taskIds = requiredTasks.rows.map(row => row.task_id);
@@ -73,13 +80,7 @@ exports.createCertification = async (req, res) => {
     );
 
     if (completedTasks.rows.length < taskIds.length) {
-      return res.status(400).json({ 
-        error: 'Member has not completed all required tasks for this competency',
-        details: {
-          required_tasks: taskIds,
-          completed_tasks: completedTasks.rows.map(r => r.task_id)
-        }
-      });
+      return errorResponse(res, { message: 'Member has not completed all required tasks for this competency' }, 400);
     }
 
     // 3. Insert certification
@@ -89,10 +90,37 @@ exports.createCertification = async (req, res) => {
       [member_id, competency_id, certified_by, date_certified || new Date()]
     );
 
-    res.status(201).json(result.rows[0]);
+    return successResponse(res, result.rows[0], 201);
   } catch (err) {
     console.error('Error creating certification:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
+  }
+};
+
+// PATCH: Update certification status
+exports.updateCertificationStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const allowedStatuses = ['current', 'expired', 'revoked'];
+  if (!status || !allowedStatuses.includes(status)) {
+    return errorResponse(res, { message: `Invalid or missing status. Allowed: ${allowedStatuses.join(', ')}` }, 400);
+  }
+
+  try {
+    const result = await db.query(
+      `UPDATE certifications
+       SET status = $1
+       WHERE id = $2
+       RETURNING *`,
+      [status, id]
+    );
+
+    if (!result.rows.length) return errorResponse(res, { message: 'Certification not found' }, 404);
+    return successResponse(res, result.rows[0], 200);
+  } catch (err) {
+    console.error('Error updating certification status', err);
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
 
@@ -101,10 +129,10 @@ exports.deleteCertification = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query('DELETE FROM certifications WHERE id = $1 RETURNING *', [id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Certification not found' });
-    res.json({ message: 'Certification removed successfully' });
+    if (!result.rows.length) return errorResponse(res, { message: 'Certification not found' }, 404);
+    return successResponse(res, { message: 'Certification removed successfully' }, 200);
   } catch (err) {
     console.error('Error deleting certification:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return errorResponse(res, 'Internal server error', 500);
   }
 };
