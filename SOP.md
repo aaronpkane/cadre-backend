@@ -357,12 +357,12 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ## API Routes Completed
 
-## **Authentication**
+### **Authentication**
 - `POST /api/auth/login` → Returns JWT token and user info.
 
 ---
 
-## **Members**
+### **Members**
 - `GET /api/members` → Retrieve all members.
 - `GET /api/members/:id` → Retrieve a member by ID.
 - `POST /api/members` → Create a new member.
@@ -371,7 +371,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ---
 
-## **Tasks**
+### **Tasks**
 - `GET /api/tasks` → Retrieve all tasks.
 - `GET /api/tasks/:id` → Retrieve a task by ID.
 - `POST /api/tasks` → Create a new task.
@@ -380,7 +380,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ---
 
-## **Competencies**
+### **Competencies**
 - `GET /api/competencies` → Retrieve all competencies.
 - `GET /api/competencies/:id` → Retrieve a competency by ID.
 - `POST /api/competencies` → Create a new competency.
@@ -389,7 +389,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ---
 
-## **Certifications**
+### **Certifications**
 - `GET /api/certifications` → Retrieve all certifications.
 - `GET /api/certifications/:id` → Retrieve a certification by ID.
 - `POST /api/certifications` → Create a new certification (with validation logic for required tasks).
@@ -398,7 +398,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ---
 
-## **Task-Competency Links**
+### **Task-Competency Links**
 - `GET /api/task-competency-links` → Retrieve all links (supports filters: `competency`, `task`).
 - `GET /api/task-competency-links/:id` → Retrieve a specific link.
 - `POST /api/task-competency-links` → Create a new link.
@@ -406,14 +406,14 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ---
 
-## **Task Logs**
+### **Task Logs**
 - `GET /api/task-logs` → Retrieve all task logs (supports filters: `member_id`, `task_id`, `start_date`, `end_date`).
 - `POST /api/task-logs` → Create one or multiple task logs in bulk.
 - `DELETE /api/task-logs/:id` → Delete a task log.
 
 ---
 
-## **Training Events**
+### **Training Events**
 - `GET /api/training-events` → Retrieve all training events.
 - `GET /api/training-events/:id` → Retrieve a training event by ID.
 - `POST /api/training-events` → Create a new training event.
@@ -422,7 +422,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ---
 
-## **Training Event Attendees**
+### **Training Event Attendees**
 - `GET /api/training-event-attendees` → Retrieve all attendees.
 - `GET /api/training-event-attendees/:id` → Retrieve an attendee by ID.
 - `POST /api/training-event-attendees` → Add one or multiple attendees.
