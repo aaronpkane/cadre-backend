@@ -429,6 +429,35 @@ const { authenticate, authorize } = require('../middleware/auth');
 - `PUT /api/training-event-attendees/:id` → Update an attendee record.
 - `DELETE /api/training-event-attendees/:id` → Delete an attendee.
 
+---
+
+## Postman Collection Structure
+```sql
+Cadre API
+  ├── Auth
+  │    └── Login (sets token)
+  ├── Members
+  │    ├── Get All
+  │    ├── Get By ID
+  │    ├── Create
+  │    ├── Update
+  │    └── Delete
+  ├── Tasks
+  │    ├── Get All
+  │    ├── Get By ID
+  │    ├── Create
+  │    ├── Update
+  │    └── Delete
+  ├── Competencies ...
+  ├── Certifications ...
+  ├── Task Logs ...
+  ├── Task-Competency Links ...
+  ├── Training Events ...
+  └── Training Event Attendees ...
+```
+
+---
+
 ## Features Implemented
 - Bulk inserts for attendees and task logs
 - Validation for required tasks in certifications
