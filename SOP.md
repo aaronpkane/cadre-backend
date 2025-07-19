@@ -259,7 +259,7 @@ Indexes:
 Foreign-key constraints:
     "training_event_attendees_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id)
     "training_event_attendees_training_event_id_fkey" FOREIGN KEY (training_event_id) REFERENCES training_events(id) ON DELETE CASCADE
-    ```
+```
 
 ### **task_logs**
 ```bash
@@ -356,6 +356,14 @@ const { authenticate, authorize } = require('../middleware/auth');
 ---
 
 ## API Routes Completed
+
+### **Reports**
+- `GET /api/reports/unit-readiness` → Unit readiness by certification status.
+- `GET /api/reports/competency-summary` → Summary counts for a specific competency.
+- `GET /api/reports/training-history` → Historical task logs by member/unit/date range.
+- `GET /api/reports/upcoming-training` → Upcoming training events by unit/date.
+- `GET /api/reports/task-compliance` → Compliance status for recurrent tasks (future enhancement).
+- `GET /api/reports/certification-risk` → Certifications expiring soon (future enhancement).
 
 ### **Authentication**
 - `POST /api/auth/login` → Returns JWT token and user info.
@@ -530,3 +538,69 @@ Cadre API
 - Reset context every 20 messages by starting a new thread with this file.
 - Once feature sprint is completed, suggest closing thread.
 - If asked about additional unique features, suggest unique thread.
+---
+
+## SQL Reference for Reports API
+
+### 1. Unit Readiness
+```sql
+SELECT u.id AS unit_id, u.name AS unit_name,
+       COUNT(m.id) AS total_members,
+       COUNT(c.id) FILTER (WHERE c.status = 'active') AS certified_members,
+       ROUND(COUNT(c.id) FILTER (WHERE c.status = 'active') * 100.0 / NULLIF(COUNT(m.id), 0), 2) AS readiness_percentage
+FROM units u
+JOIN members m ON m.unit_id = u.id
+LEFT JOIN certifications c ON c.member_id = m.id
+    AND (c.competency_id = $1 OR $1 IS NULL)
+WHERE (u.id = $2 OR $2 IS NULL)
+GROUP BY u.id, u.name
+ORDER BY readiness_percentage DESC;
+```
+
+Parameters: `$1` = competency_id (nullable), `$2` = unit_id (nullable)
+
+---
+
+### 2. Competency Summary
+```sql
+SELECT c.status, COUNT(*) AS count
+FROM certifications c
+WHERE c.competency_id = $1
+GROUP BY c.status;
+```
+
+Parameter: `$1` = competency_id
+
+---
+
+### 3. Training History
+```sql
+SELECT tl.id, tl.task_id, t.title AS task_title,
+       tl.member_id, m.first_name || ' ' || m.last_name AS member_name,
+       tl.date_completed
+FROM task_logs tl
+JOIN tasks t ON t.id = tl.task_id
+JOIN members m ON m.id = tl.member_id
+WHERE ($1 IS NULL OR tl.member_id = $1)
+  AND ($2 IS NULL OR m.unit_id = $2)
+  AND ($3 IS NULL OR tl.date_completed >= $3)
+  AND ($4 IS NULL OR tl.date_completed <= $4)
+ORDER BY tl.date_completed DESC;
+```
+
+Parameters: `$1` = member_id, `$2` = unit_id, `$3` = start_date, `$4` = end_date
+
+---
+
+### 4. Upcoming Training
+```sql
+SELECT te.id, te.title, te.date, te.start_time, te.end_time,
+       m.first_name || ' ' || m.last_name AS instructor_name
+FROM training_events te
+JOIN members m ON m.id = te.instructor_id
+WHERE te.date >= CURRENT_DATE
+  AND ($1 IS NULL OR te.unit_id = $1)
+ORDER BY te.date ASC;
+```
+
+Parameter: `$1` = unit_id (nullable)
