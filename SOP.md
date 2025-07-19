@@ -259,7 +259,7 @@ Indexes:
 Foreign-key constraints:
     "training_event_attendees_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id)
     "training_event_attendees_training_event_id_fkey" FOREIGN KEY (training_event_id) REFERENCES training_events(id) ON DELETE CASCADE
-```
+    ```
 
 ### **task_logs**
 ```bash
@@ -456,12 +456,46 @@ Cadre API
   │    ├── Create
   │    ├── Update
   │    └── Delete
-  ├── Competencies ...
-  ├── Certifications ...
-  ├── Task Logs ...
-  ├── Task-Competency Links ...
-  ├── Training Events ...
-  └── Training Event Attendees ...
+  ├── Competencies
+  │    ├── Get All
+  │    ├── Get By ID
+  │    ├── Create
+  │    ├── Update
+  │    └── Delete
+  ├── Certifications
+  │    ├── Get All
+  │    ├── Get By ID
+  │    ├── Create
+  │    ├── Update Status
+  │    └── Delete
+  ├── Task-Competency Links
+  │    ├── Get All
+  │    ├── Get By ID
+  │    ├── Create
+  │    └── Delete
+  ├── Task Logs
+  │    ├── Get All
+  │    ├── Create (Bulk Supported)
+  │    └── Delete
+  ├── Training Events
+  │    ├── Get All
+  │    ├── Get By ID
+  │    ├── Create
+  │    ├── Update
+  │    └── Delete
+  ├── Training Event Attendees
+  │    ├── Get All
+  │    ├── Get By ID
+  │    ├── Add Attendee(s)
+  │    ├── Update
+  │    └── Delete
+  └── Reports
+       ├── Get Unit Readiness
+       ├── Get Competency Summary
+       ├── Get Training History
+       ├── Get Upcoming Training
+       ├── Get Task Compliance (future)
+       └── Get Certification Risk (future)
 ```
 
 ---
@@ -474,14 +508,14 @@ Cadre API
 
 ---
 
-## Next Steps (Pre-Reports Cleanup)
+## Next Steps (Reports Cleanup)
 
 ## ✅ Immediate Tasks
-1. **Finalize Validation Across All Controllers**
+1. **Finalize Validation Across All Controllers** (complete)
    - Ensure every `POST` and `PUT` route validates required fields consistently.
    - Confirm proper HTTP status codes (`201` for creation, `200` for updates/deletes, `404` for not found).
 
-2. **Standardize API Response Structure**
+2. **Standardize API Response Structure** (complete)
    - All responses use:
      - Success:
        ```json
@@ -492,17 +526,17 @@ Cadre API
        { "success": false, "error": "Descriptive error message" }
        ```
 
-3. **Update SOP.md**
+3. **Update SOP.md** (complete)
    - Add finalized API standards, status code usage, and validation rules for future developers.
 
 ---
 
 ## ✅ Next Development Sprint
-- **Postman Collection & Automated Testing**
+- **Postman Collection & Automated Testing** (complete)
   - Build a complete Postman collection with positive and negative test cases.
   - Implement environment variables for `{{base_url}}` and `{{token}}`.
 
-- **Audit Logging**
+- **Audit Logging** (complete)
   - Implement `withAudit` middleware to capture:
     - `user_id`, `action`, `target_table`, `target_id`, `change_data`, `timestamp`.
 
