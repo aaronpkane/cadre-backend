@@ -26,6 +26,49 @@ Assume I am a total beginner with zero coding experience. Assume I’m stuck in 
 
 ## Database Schema
 
+## Database Schema Updates
+### ✅ task_logs
+- Added `instructor_id INT REFERENCES members(id)`
+- Enforced `certification_phase TEXT NOT NULL` (values: `initial`, `recurrent`)
+- Columns now:
+  ```sql
+  id | task_id | member_id | completed_by | completion_date | instructor_id | certification_phase | notes
+  ```
+---
+
+### ✅ certifications
+- Correct field name: `certification_date DATE NOT NULL`
+- Status allowed: `active | expired | revoked`
+- Phase allowed: `initial | recurrent`
+
+---
+
+## Key Integrity Fixes
+- All controllers and routes now **match schema field names**.
+- Validation enforces:
+  - Task Logs: `task_id`, `member_id`, `completion_date`, `instructor_id`, `certification_phase`
+  - Certifications: `member_id`, `competency_id`, `certification_phase`
+- `withAudit()` updated to log:
+  - Correct `target_id` (supports single and bulk inserts)
+  - Original request body
+  - User context from JWT
+
+---
+
+## Performance Indexes
+Added for critical queries:
+```sql
+CREATE INDEX idx_certifications_status ON certifications(status);
+CREATE INDEX idx_certifications_competency ON certifications(competency_id);
+CREATE INDEX idx_task_logs_member_id ON task_logs(member_id);
+CREATE INDEX idx_task_logs_completion_date ON task_logs(completion_date);
+CREATE INDEX idx_task_logs_instructor_id ON task_logs(instructor_id);
+CREATE INDEX idx_training_events_date ON training_events(date);
+CREATE INDEX idx_members_unit_id ON members(unit_id);
+```
+
+---
+
 ### **users**
 ```bash
                                           Table "public.users"
@@ -259,7 +302,7 @@ Indexes:
 Foreign-key constraints:
     "training_event_attendees_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id)
     "training_event_attendees_training_event_id_fkey" FOREIGN KEY (training_event_id) REFERENCES training_events(id) ON DELETE CASCADE
-    ```
+```
 
 ### **task_logs**
 ```bash
@@ -272,13 +315,18 @@ Foreign-key constraints:
  completed_by        | integer |           |          |
  completion_date     | date    |           | not null |
  certification_phase | text    |           | not null |
+ instructor_id       | integer |           | not null |
  notes               | text    |           |          |
 Indexes:
     "task_logs_pkey" PRIMARY KEY, btree (id)
+    "idx_task_logs_completion_date" btree (completion_date)
+    "idx_task_logs_instructor_id" btree (instructor_id)
+    "idx_task_logs_member_id" btree (member_id)
 Check constraints:
     "task_logs_certification_phase_check" CHECK (certification_phase = ANY (ARRAY['initial'::text, 'recurrent'::text]))
 Foreign-key constraints:
     "task_logs_completed_by_fkey" FOREIGN KEY (completed_by) REFERENCES users(id)
+    "task_logs_instructor_id_fkey" FOREIGN KEY (instructor_id) REFERENCES members(id)
     "task_logs_member_id_fkey" FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
     "task_logs_task_id_fkey" FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 Referenced by:
@@ -365,6 +413,67 @@ const { authenticate, authorize } = require('../middleware/auth');
 - `GET /api/reports/task-compliance` → Compliance status for recurrent tasks (future enhancement).
 - `GET /api/reports/certification-risk` → Certifications expiring soon (future enhancement).
 
+#### SQL Reference for Reports API
+
+##### 1. Unit Readiness
+```sql
+SELECT u.id AS unit_id, u.name AS unit_name,
+       COUNT(m.id) AS total_members,
+       COUNT(c.id) FILTER (WHERE c.status = 'active') AS certified_members,
+       ROUND(COUNT(c.id) FILTER (WHERE c.status = 'active') * 100.0 / NULLIF(COUNT(m.id), 0), 2) AS readiness_percentage
+FROM units u
+JOIN members m ON m.unit_id = u.id
+LEFT JOIN certifications c ON c.member_id = m.id
+    AND (c.competency_id = $1 OR $1 IS NULL)
+WHERE (u.id = $2 OR $2 IS NULL)
+GROUP BY u.id, u.name
+ORDER BY readiness_percentage DESC;
+```
+
+Parameters: `$1` = competency_id (nullable), `$2` = unit_id (nullable)
+
+##### 2. Competency Summary
+```sql
+SELECT c.status, COUNT(*) AS count
+FROM certifications c
+WHERE c.competency_id = $1
+GROUP BY c.status;
+```
+
+Parameter: `$1` = competency_id
+
+##### 3. Training History
+```sql
+SELECT tl.id, tl.task_id, t.title AS task_title,
+       tl.member_id, m.first_name || ' ' || m.last_name AS member_name,
+       tl.date_completed
+FROM task_logs tl
+JOIN tasks t ON t.id = tl.task_id
+JOIN members m ON m.id = tl.member_id
+WHERE ($1 IS NULL OR tl.member_id = $1)
+  AND ($2 IS NULL OR m.unit_id = $2)
+  AND ($3 IS NULL OR tl.date_completed >= $3)
+  AND ($4 IS NULL OR tl.date_completed <= $4)
+ORDER BY tl.date_completed DESC;
+```
+
+Parameters: `$1` = member_id, `$2` = unit_id, `$3` = start_date, `$4` = end_date
+
+##### 4. Upcoming Training
+```sql
+SELECT te.id, te.title, te.date, te.start_time, te.end_time,
+       m.first_name || ' ' || m.last_name AS instructor_name
+FROM training_events te
+JOIN members m ON m.id = te.instructor_id
+WHERE te.date >= CURRENT_DATE
+  AND ($1 IS NULL OR te.unit_id = $1)
+ORDER BY te.date ASC;
+```
+
+Parameter: `$1` = unit_id (nullable)
+
+---
+
 ### **Authentication**
 - `POST /api/auth/login` → Returns JWT token and user info.
 
@@ -439,6 +548,33 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 ---
 
+## Audit Logging
+- Middleware: `withAudit(tableName)`
+- Logs:
+  - `user_id`, `action`, `target_table`, `target_id`, `change_data (JSON)`, `timestamp`
+- Applies to:
+  - Members
+  - Tasks
+  - Task Logs
+  - Competencies
+  - Certifications
+  - Training Events
+  - Training Event Attendees
+
+---
+
+## Validation & Response Standards
+- **Success:**
+  ```json
+  { "success": true, "data": { ... } }
+  ```
+- **Error:**
+  ```json
+  { "success": false, "error": "Descriptive error" }
+  ```
+
+---
+
 ## Postman Collection Structure
 ```sql
 Cadre API
@@ -510,51 +646,14 @@ Cadre API
 
 ## Next Steps (Reports Cleanup)
 
-## ✅ Immediate Tasks
-1. **Finalize Validation Across All Controllers** (complete)
-   - Ensure every `POST` and `PUT` route validates required fields consistently.
-   - Confirm proper HTTP status codes (`201` for creation, `200` for updates/deletes, `404` for not found).
+## ✅ Immediate Steps
 
-2. **Standardize API Response Structure** (complete)
-   - All responses use:
-     - Success:
-       ```json
-       { "success": true, "data": { ... } }
-       ```
-     - Error:
-       ```json
-       { "success": false, "error": "Descriptive error message" }
-       ```
-
-3. **Update SOP.md** (complete)
-   - Add finalized API standards, status code usage, and validation rules for future developers.
-
----
-
-## ✅ Next Development Sprint
-- **Postman Collection & Automated Testing** (complete)
-  - Build a complete Postman collection with positive and negative test cases.
-  - Implement environment variables for `{{base_url}}` and `{{token}}`.
-
-- **Audit Logging** (complete)
-  - Implement `withAudit` middleware to capture:
-    - `user_id`, `action`, `target_table`, `target_id`, `change_data`, `timestamp`.
-
-- **Performance Optimization**
-  - Add DB indexes for high-usage columns:
-    ```sql
-    CREATE INDEX idx_certifications_status ON certifications(status);
-    CREATE INDEX idx_task_logs_member_id ON task_logs(member_id);
-    CREATE INDEX idx_training_events_date ON training_events(date);
-    ```
+- Freeze backend codebase.
+- Begin **Frontend Development** (React or React + Tailwind suggested).
 
 ---
 
 ## ✅ Future Enhancements
-- **Reports API**
-  - Unit readiness metrics (certification status by unit).
-  - Member training history.
-  - Competency completion dashboards.
 
 - **UI/UX**
   - Build a modern frontend with secure authentication.
@@ -573,68 +672,3 @@ Cadre API
 - Once feature sprint is completed, suggest closing thread.
 - If asked about additional unique features, suggest unique thread.
 ---
-
-## SQL Reference for Reports API
-
-### 1. Unit Readiness
-```sql
-SELECT u.id AS unit_id, u.name AS unit_name,
-       COUNT(m.id) AS total_members,
-       COUNT(c.id) FILTER (WHERE c.status = 'active') AS certified_members,
-       ROUND(COUNT(c.id) FILTER (WHERE c.status = 'active') * 100.0 / NULLIF(COUNT(m.id), 0), 2) AS readiness_percentage
-FROM units u
-JOIN members m ON m.unit_id = u.id
-LEFT JOIN certifications c ON c.member_id = m.id
-    AND (c.competency_id = $1 OR $1 IS NULL)
-WHERE (u.id = $2 OR $2 IS NULL)
-GROUP BY u.id, u.name
-ORDER BY readiness_percentage DESC;
-```
-
-Parameters: `$1` = competency_id (nullable), `$2` = unit_id (nullable)
-
----
-
-### 2. Competency Summary
-```sql
-SELECT c.status, COUNT(*) AS count
-FROM certifications c
-WHERE c.competency_id = $1
-GROUP BY c.status;
-```
-
-Parameter: `$1` = competency_id
-
----
-
-### 3. Training History
-```sql
-SELECT tl.id, tl.task_id, t.title AS task_title,
-       tl.member_id, m.first_name || ' ' || m.last_name AS member_name,
-       tl.date_completed
-FROM task_logs tl
-JOIN tasks t ON t.id = tl.task_id
-JOIN members m ON m.id = tl.member_id
-WHERE ($1 IS NULL OR tl.member_id = $1)
-  AND ($2 IS NULL OR m.unit_id = $2)
-  AND ($3 IS NULL OR tl.date_completed >= $3)
-  AND ($4 IS NULL OR tl.date_completed <= $4)
-ORDER BY tl.date_completed DESC;
-```
-
-Parameters: `$1` = member_id, `$2` = unit_id, `$3` = start_date, `$4` = end_date
-
----
-
-### 4. Upcoming Training
-```sql
-SELECT te.id, te.title, te.date, te.start_time, te.end_time,
-       m.first_name || ' ' || m.last_name AS instructor_name
-FROM training_events te
-JOIN members m ON m.id = te.instructor_id
-WHERE te.date >= CURRENT_DATE
-  AND ($1 IS NULL OR te.unit_id = $1)
-ORDER BY te.date ASC;
-```
-
-Parameter: `$1` = unit_id (nullable)
