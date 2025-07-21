@@ -9,19 +9,27 @@ function withAudit(targetTable) {
 
       try {
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          const actionMap = { POST: 'CREATE', PUT: 'UPDATE', DELETE: 'DELETE' };
+          const actionMap = { POST: 'CREATE', PUT: 'UPDATE', PATCH: 'UPDATE', DELETE: 'DELETE' };
           const action = actionMap[req.method];
 
           if (action) {
             const parsedBody = typeof body === 'string' ? JSON.parse(body) : body;
+            const data = parsedBody?.data;
+            let targetId = null;
+
+            if (Array.isArray(data) && data.length > 0) {
+              targetId = data[0]?.id;
+            } else if (data && typeof data === 'object') {
+              targetId = data.id || null;
+            }
 
             await logAction(
               req.user?.id || null,
               action,
               targetTable,
-              parsedBody?.id || null,
-              req.body,           // Original request data
-              req.user || {}      // Full JWT payload
+              targetId,
+              req.body,    // Original request body
+              req.user || {}
             );
           }
         }
@@ -35,3 +43,4 @@ function withAudit(targetTable) {
 }
 
 module.exports = { withAudit };
+

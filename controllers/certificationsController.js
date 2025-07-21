@@ -85,9 +85,9 @@ exports.createCertification = async (req, res) => {
 
     // 3. Insert certification
     const result = await db.query(
-      `INSERT INTO certifications (member_id, competency_id, certified_by, date_certified)
+      `INSERT INTO certifications (member_id, competency_id, certified_by, certification_date)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [member_id, competency_id, certified_by, date_certified || new Date()]
+      [member_id, competency_id, certified_by, certification_date || new Date()]
     );
 
     return successResponse(res, result.rows[0], 201);
@@ -102,7 +102,7 @@ exports.updateCertificationStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  const allowedStatuses = ['current', 'expired', 'revoked'];
+  const allowedStatuses = ['active', 'expired', 'revoked'];
   if (!status || !allowedStatuses.includes(status)) {
     return errorResponse(res, { message: `Invalid or missing status. Allowed: ${allowedStatuses.join(', ')}` }, 400);
   }

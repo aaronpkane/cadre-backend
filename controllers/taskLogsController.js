@@ -25,18 +25,18 @@ exports.getAllLogs = async (req, res) => {
     }
     if (start_date) {
       params.push(start_date);
-      conditions.push(`tl.date_completed >= $${params.length}`);
+      conditions.push(`tl.completion_date >= $${params.length}`);
     }
     if (end_date) {
       params.push(end_date);
-      conditions.push(`tl.date_completed <= $${params.length}`);
+      conditions.push(`tl.completion_date <= $${params.length}`);
     }
 
     if (conditions.length > 0) {
       sql += ' WHERE ' + conditions.join(' AND ');
     }
 
-    sql += ' ORDER BY tl.date_completed DESC';
+    sql += ' ORDER BY tl.completion_date DESC';
 
     const result = await db.query(sql, params);
     return successResponse(res, result.rows, 200);
@@ -54,25 +54,26 @@ exports.createLogs = async (req, res) => {
   const logs = Array.isArray(input) ? input : [input];
 
   for (const log of logs) {
-    if (!log.task_id || !log.member_id || !log.date_completed || !log.instructor_id) {
+    if (!log.task_id || !log.member_id || !log.completion_date || !log.instructor_id || !log.certification_phase) {
       return errorResponse(res, { message: 'Missing required fields in one or more objects' }, 400);
     }
   }
 
   try {
     const values = logs
-      .map((l, idx) => `($${idx * 4 + 1}, $${idx * 4 + 2}, $${idx * 4 + 3}, $${idx * 4 + 4})`)
+      .map((l, idx) => `($${idx * 5 + 1}, $${idx * 5 + 2}, $${idx * 5 + 3}, $${idx * 5 + 4}, $${idx * 5 + 5})`)
       .join(', ');
 
     const flatValues = logs.flatMap(l => [
       l.task_id,
       l.member_id,
-      l.date_completed,
-      l.instructor_id
+      l.completion_date,
+      l.instructor_id,
+      l.certification_phase
     ]);
 
     const query = `
-      INSERT INTO task_logs (task_id, member_id, date_completed, instructor_id)
+      INSERT INTO task_logs (task_id, member_id, completion_date, instructor_id, certification_phase)
       VALUES ${values}
       RETURNING *;
     `;

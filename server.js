@@ -34,6 +34,10 @@ app.use('/api/certifications', certificationRoutes); // Certifications Routes ho
 const authRoutes = require('./routes/auth'); 
 app.use('/api/auth', authRoutes); // Auth Routes hook
 
+const reportRoutes = require('./routes/reports');
+app.use('/api/reports', reportRoutes); // Reports Routes hook
+
+
 // Backend Health check route
 app.get('/', (req, res) => {
   res.send('Cadre backend is running');
